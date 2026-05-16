@@ -1,0 +1,43 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+
+:root {
+  --background: #FFFDF9;
+  --foreground: #111111;
+}
+
+body {
+  color: var(--foreground);
+  background: var(--background);
+  font-family: 'Inter', sans-serif;
+}
+
+@layer utilities {
+  .text-dark {
+    @apply text-[#111111];
+  }
+  .text-muted {
+    @apply text-[#6B7280];
+  }
+  .bg-mint {
+    @apply bg-[#2EE6A6];
+  }
+  .bg-cream {
+    @apply bg-[#FFFDF9];
+  }
+  .bg-dark {
+    @apply bg-[#111111];
+  }
+  .border-mint {
+    @apply border-[#2EE6A6];
+  }
+  .text-mint {
+    @apply text-[#2EE6A6];
+  }
+  .from-mint {
+    @apply from-[#2EE6A6];
+  }
+}
