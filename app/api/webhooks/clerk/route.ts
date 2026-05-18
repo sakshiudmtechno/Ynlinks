@@ -1,7 +1,6 @@
 import { Webhook } from 'svix';
 import { headers } from 'next/headers';
 import { NextResponse } from 'next/server';
-import { CONVEX_URL } from '$env/static/private';
 
 export async function POST(req: Request) {
   const WEBHOOK_SECRET = process.env.CLERK_WEBHOOK_SECRET;
@@ -56,7 +55,7 @@ export async function POST(req: Request) {
     const displayName = [first_name, last_name].filter(Boolean).join(' ') || baseUsername;
 
     // Create user in Convex via HTTP mutation
-    const convexUrl = process.env.NEXT_PUBLIC_CONVEX_URL || CONVEX_URL;
+    const convexUrl = process.env.NEXT_PUBLIC_CONVEX_URL;
     if (convexUrl) {
       try {
         await fetch(`${convexUrl}/api/mutation/users/createUser`, {
@@ -83,7 +82,7 @@ export async function POST(req: Request) {
     const { id: clerkId, first_name, last_name, image_url } = data;
 
     // Get the user from Convex first
-    const convexUrl = process.env.NEXT_PUBLIC_CONVEX_URL || CONVEX_URL;
+    const convexUrl = process.env.NEXT_PUBLIC_CONVEX_URL;
     if (convexUrl) {
       try {
         // First get the user to find their Convex ID

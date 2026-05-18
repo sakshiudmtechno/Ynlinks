@@ -1,4 +1,5 @@
 import { v } from 'convex/values';
+import type { Id } from 'convex';
 import { query, mutation } from './_generated/server';
 
 export const getAllUsers = query({
