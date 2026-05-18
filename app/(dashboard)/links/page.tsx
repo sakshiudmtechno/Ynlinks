@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { useUser } from '@clerk/nextjs';
 import { useQuery, useMutation } from 'convex/react';
 import { api } from '@/convex/_generated/api';
+import { Id } from '@/convex/_generated/dataModel';
 import { Plus, X, GripVertical, Edit, Eye, EyeOff, Trash2, BarChart3, Image as ImageIcon, AlertCircle } from 'lucide-react';
 
 interface Link {
@@ -110,7 +111,7 @@ export default function LinksPage() {
     try {
       if (editingLink) {
         await updateLinkMutation({
-          linkId: editingLink._id,
+          linkId: editingLink._id as Id<"links">,
           title: formData.title,
           url: formData.url,
           description: formData.description || undefined,
@@ -119,7 +120,7 @@ export default function LinksPage() {
         });
       } else {
         await createLinkMutation({
-          userId: profile._id,
+          userId: profile._id as Id<"links">,
           title: formData.title,
           url: formData.url,
           description: formData.description || undefined,

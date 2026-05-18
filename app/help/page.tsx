@@ -29,12 +29,12 @@ export default function HelpPage() {
           <div className="space-y-6">
             <div className="bg-white rounded-2xl border border-gray-200 p-6">
               <h2 className="text-xl font-bold text-[#111111] mb-3">How do I create an account?</h2>
-              <p className="text-[#6B7280]">Click on "Sign Up" at the top of the page and follow the instructions to create your account with email or Google sign-in.</p>
+              <p className="text-[#6B7280]">Click on &quot;Sign Up&quot; at the top of the page and follow the instructions to create your account with email or Google sign-in.</p>
             </div>
 
             <div className="bg-white rounded-2xl border border-gray-200 p-6">
               <h2 className="text-xl font-bold text-[#111111] mb-3">How do I add links to my bio page?</h2>
-              <p className="text-[#6B7280]">Go to your Dashboard and click on "Links". From there, you can add up to 5 links with titles, URLs, and optional thumbnails.</p>
+              <p className="text-[#6B7280]">Go to your Dashboard and click on &quot;Links&quot;. From there, you can add up to 5 links with titles, URLs, and optional thumbnails.</p>
             </div>
 
             <div className="bg-white rounded-2xl border border-gray-200 p-6">

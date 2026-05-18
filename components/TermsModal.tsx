@@ -30,7 +30,7 @@ export function TermsModal({ isOpen, onClose }: TermsModalProps) {
                 <h3 className="font-semibold text-[#111111] mb-2">How You Earn Money</h3>
                 <p className="text-sm text-[#6B7280] leading-relaxed">
                   You earn <strong className="text-[#2EE6A6]">₹0.10</strong> for every unique click on your links.
-                  When visitors click "Visit Link" on any of your links, you earn money. You can have up to 5 links,
+                  When visitors click &quot;Visit Link&quot; on any of your links, you earn money. You can have up to 5 links,
                   and each link earns you ₹0.10 per unique click.
                 </p>
               </div>
@@ -43,7 +43,7 @@ export function TermsModal({ isOpen, onClose }: TermsModalProps) {
               <div>
                 <h3 className="font-semibold text-[#111111] mb-2">What Counts as a Click</h3>
                 <p className="text-sm text-[#6B7280] leading-relaxed">
-                  A click is counted when someone clicks "Visit Link" on one of your links. Each unique
+                  A click is counted when someone clicks &quot;Visit Link&quot; on one of your links. Each unique
                   IP address can click each link once per 24 hours. This means the same visitor can earn you
                   money by clicking multiple different links!
                 </p>
@@ -110,7 +110,7 @@ export function TermsModal({ isOpen, onClose }: TermsModalProps) {
             <div className="bg-blue-50 rounded-xl p-4 border border-blue-200">
               <p className="text-sm text-blue-900">
                 <strong>Pro Tip:</strong> Create compelling link titles and descriptions to encourage visitors
-                to click on your links. The more engaging your content, the more clicks and earnings you'll get!
+                to click on your links. The more engaging your content, the more clicks and earnings you&apos;ll get!
               </p>
             </div>
           </div>
