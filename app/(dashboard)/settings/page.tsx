@@ -4,8 +4,7 @@ import { useState, useEffect } from 'react';
 import { useUser } from '@clerk/nextjs';
 import { useQuery, useMutation } from 'convex/react';
 import { api } from '@/convex/_generated/api';
-import { Save, User, Copy, Camera } from 'lucide-react';
-import Link from 'next/link';
+import { Save, User, Camera, Check } from 'lucide-react';
 
 export default function SettingsPage() {
   const { user, isLoaded } = useUser();
@@ -39,15 +38,13 @@ export default function SettingsPage() {
     setTimeout(() => setCopied(false), 2000);
   };
 
-  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-
     if (file.size > 2 * 1024 * 1024) {
       alert('Image size should be less than 2MB');
       return;
     }
-
     const reader = new FileReader();
     reader.onloadend = () => {
       setFormData({ ...formData, avatarUrl: reader.result as string });
@@ -84,70 +81,51 @@ export default function SettingsPage() {
   if (!isLoaded) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#2EE6A6]"></div>
+        <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-[#2EE6A6]"></div>
       </div>
     );
   }
 
   return (
-    <div className="max-w-3xl">
-      <div className="bg-white rounded-2xl border-2 border-gray-200 p-6 sm:p-8 mb-6">
-        <div className="mb-8">
-          <h3 className="text-lg font-display font-bold text-[#111111] mb-4">Profile Photo</h3>
-          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-6">
-            <input
-              type="file"
-              accept="image/*"
-              capture="environment"
-              onChange={handleImageUpload}
-              className="hidden"
-              id="profile-photo-upload"
-            />
-            <label htmlFor="profile-photo-upload" className="cursor-pointer group relative">
+    <div className="max-w-2xl mx-auto space-y-4">
+      {/* Profile Card */}
+      <div className="bg-white rounded-xl border border-gray-200 p-4">
+        <div className="flex items-center gap-4 mb-4">
+          <div className="relative">
+            <input type="file" accept="image/*" onChange={handleImageUpload} className="hidden" id="avatar-upload" />
+            <label htmlFor="avatar-upload" className="cursor-pointer group">
               {formData.avatarUrl ? (
-                <div className="relative">
-                  <img
-                    src={formData.avatarUrl}
-                    alt={profile?.username}
-                    className="w-24 h-24 sm:w-28 sm:h-28 rounded-2xl object-cover border-2 border-[#2EE6A6] shadow-lg group-hover:opacity-75 transition-opacity"
-                  />
-                  <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                    <div className="bg-black/60 rounded-full p-3">
-                      <Camera className="h-6 w-6 text-white" />
-                    </div>
-                  </div>
-                </div>
+                <img src={formData.avatarUrl} alt="Profile" className="w-16 h-16 rounded-xl object-cover border-2 border-[#2EE6A6]" />
               ) : (
-                <div className="w-24 h-24 sm:w-28 sm:h-28 bg-gradient-to-br from-[#2EE6A6] to-[#2EE6A6]/80 rounded-2xl flex items-center justify-center border-2 border-[#2EE6A6] shadow-lg group-hover:opacity-90 transition-opacity">
-                  <User className="h-12 w-12 sm:h-14 sm:w-14 text-white" />
+                <div className="w-16 h-16 rounded-xl bg-gradient-to-br from-[#2EE6A6] to-[#2EE6A6]/80 flex items-center justify-center border-2 border-[#2EE6A6]">
+                  <User className="w-7 h-7 text-white" />
                 </div>
               )}
+              <div className="absolute -bottom-1 -right-1 w-6 h-6 bg-[#2EE6A6] rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                <Camera className="w-3 h-3 text-white" />
+              </div>
             </label>
-            <div className="flex-1 min-w-0">
-              <h2 className="text-xl sm:text-2xl font-display font-bold text-[#111111] mb-1">{profile?.displayName || profile?.username}</h2>
-              <p className="text-[#6B7280] mb-3">@{profile?.username}</p>
-              <p className="text-sm text-gray-600 mb-2">Click to change photo</p>
-              <p className="text-xs text-gray-500">Max 2MB - This photo will appear on your public profile and in the dashboard header</p>
-            </div>
+          </div>
+          <div>
+            <h2 className="font-semibold text-[#111111]">{profile?.displayName || profile?.username}</h2>
+            <p className="text-xs text-[#6B7280]">@{profile?.username}</p>
           </div>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-6">
+        <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="block text-sm font-semibold text-[#111111] mb-2">Display Name</label>
+            <label className="block text-xs font-medium text-[#111111] mb-1.5">Display Name</label>
             <input
               type="text"
               required
               value={formData.displayName}
               onChange={(e) => setFormData({ ...formData, displayName: e.target.value })}
-              className="w-full border-2 border-gray-200 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-[#2EE6A6] focus:border-transparent transition-all"
+              className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#2EE6A6]"
             />
           </div>
 
           <div>
-            <label className="block text-sm font-semibold text-[#111111] mb-2">
-              Bio <span className="text-[#6B7280] font-normal">(Max 80 characters)</span>
-            </label>
+            <label className="block text-xs font-medium text-[#111111] mb-1.5">Bio (max 80 chars)</label>
             <textarea
               value={formData.bio}
               onChange={(e) => {
@@ -155,76 +133,69 @@ export default function SettingsPage() {
                   setFormData({ ...formData, bio: e.target.value });
                 }
               }}
-              rows={3}
+              rows={2}
               placeholder="Tell people about yourself..."
-              className="w-full border-2 border-gray-200 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-[#2EE6A6] focus:border-transparent transition-all"
+              className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#2EE6A6] resize-none"
             />
-            <p className={`text-xs mt-1 ${formData.bio.length > 70 ? 'text-red-500' : 'text-[#6B7280]'}`}>
-              {80 - formData.bio.length} characters remaining
-            </p>
+            <p className="text-xs text-[#6B7280] mt-1 text-right">{80 - formData.bio.length} left</p>
           </div>
 
           <div>
-            <label className="block text-sm font-semibold text-[#111111] mb-2">Mobile Number</label>
+            <label className="block text-xs font-medium text-[#111111] mb-1.5">Mobile Number</label>
             <input
               type="tel"
               value={formData.phone}
               onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
               placeholder="+911234567890"
-              className="w-full border-2 border-gray-200 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-[#2EE6A6] focus:border-transparent transition-all"
+              className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#2EE6A6]"
             />
-            <p className="mt-2 text-xs text-[#6B7280]">Include country code (e.g., +91 for India, +1 for USA)</p>
           </div>
 
           <div>
-            <label className="block text-sm font-semibold text-[#111111] mb-2">Email</label>
+            <label className="block text-xs font-medium text-[#111111] mb-1.5">Email</label>
             <input
               type="email"
               value={profile?.email || user?.emailAddresses[0]?.emailAddress || ''}
               disabled
-              className="w-full border-2 border-gray-200 rounded-xl px-4 py-3 bg-gray-50 text-[#6B7280] cursor-not-allowed"
+              className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm bg-gray-50 text-[#6B7280]"
             />
-            <p className="mt-2 text-xs text-[#6B7280]">Email cannot be changed</p>
           </div>
 
           <div>
-            <label className="block text-sm font-semibold text-[#111111] mb-2">Username</label>
+            <label className="block text-xs font-medium text-[#111111] mb-1.5">Username</label>
             <input
               type="text"
               value={profile?.username || ''}
               disabled
-              className="w-full border-2 border-gray-200 rounded-xl px-4 py-3 bg-gray-50 text-[#6B7280] cursor-not-allowed"
+              className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm bg-gray-50 text-[#6B7280]"
             />
-            <p className="mt-2 text-xs text-[#6B7280]">Username cannot be changed</p>
           </div>
 
           <div>
-            <label className="block text-sm font-semibold text-[#111111] mb-2">Your Profile URL</label>
-            <div className="flex gap-3">
+            <label className="block text-xs font-medium text-[#111111] mb-1.5">Your Profile URL</label>
+            <div className="flex gap-2">
               <input
                 type="text"
                 value={bioLink}
                 disabled
-                className="flex-1 border-2 border-gray-200 rounded-xl px-4 py-3 bg-gray-50 text-[#6B7280] cursor-not-allowed font-mono text-sm"
+                className="flex-1 border border-gray-200 rounded-lg px-3 py-2.5 text-sm bg-gray-50 text-[#6B7280] font-mono truncate"
               />
               <button
                 type="button"
                 onClick={() => copyToClipboard(bioLink)}
-                className="px-6 py-3 bg-[#2EE6A6] text-white rounded-xl hover:bg-[#1FD695] transition-all flex items-center gap-2 font-semibold shadow-lg"
+                className={`px-4 py-2.5 rounded-lg font-medium text-sm transition-all ${
+                  copied ? 'bg-green-500 text-white' : 'bg-[#2EE6A6] text-white hover:bg-[#1FD695]'
+                }`}
               >
-                <Copy className="h-4 w-4" />
-                {copied ? 'Copied!' : 'Copy'}
+                {copied ? <Check size={14} /> : <Copy size={14} />}
               </button>
             </div>
-            <p className="mt-2 text-xs text-[#6B7280]">Share this URL with your audience</p>
           </div>
 
           {success && (
-            <div className="bg-[#2EE6A6]/10 border-2 border-[#2EE6A6]/30 rounded-xl p-4">
-              <p className="text-[#111111] font-semibold flex items-center gap-2">
-                <svg className="h-5 w-5 text-[#2EE6A6]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                </svg>
+            <div className="bg-[#2EE6A6]/10 border border-[#2EE6A6]/30 rounded-lg px-4 py-3">
+              <p className="text-sm text-[#111111] font-medium flex items-center gap-2">
+                <Check size={14} className="text-[#2EE6A6]" />
                 Settings saved successfully!
               </p>
             </div>
@@ -233,28 +204,29 @@ export default function SettingsPage() {
           <button
             type="submit"
             disabled={loading}
-            className="w-full bg-[#2EE6A6] text-white px-6 py-3 rounded-xl hover:bg-[#1FD695] transition-all font-semibold shadow-lg disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+            className="w-full bg-[#2EE6A6] text-white py-3 rounded-xl font-semibold hover:bg-[#1FD695] transition-all disabled:opacity-50 flex items-center justify-center gap-2"
           >
-            <Save className="h-5 w-5" />
+            <Save size={16} />
             {loading ? 'Saving...' : 'Save Changes'}
           </button>
         </form>
       </div>
 
-      <div className="bg-gradient-to-br from-[#FFFDF9] to-gray-50 border-2 border-gray-200 rounded-2xl p-6">
-        <h3 className="text-lg font-display font-bold text-[#111111] mb-4">Account Information</h3>
-        <div className="space-y-3 text-sm">
+      {/* Account Info Card */}
+      <div className="bg-white rounded-xl border border-gray-200 p-4">
+        <h3 className="text-sm font-semibold text-[#111111] mb-3">Account Information</h3>
+        <div className="space-y-2 text-xs">
           <div className="flex justify-between">
-            <span className="text-[#6B7280]">Account Status:</span>
-            <span className="font-semibold text-[#111111] capitalize">{profile?.status || 'active'}</span>
+            <span className="text-[#6B7280]">Status</span>
+            <span className="font-medium text-[#111111] capitalize">{profile?.status || 'active'}</span>
           </div>
           <div className="flex justify-between">
-            <span className="text-[#6B7280]">Role:</span>
-            <span className="font-semibold text-[#111111] capitalize">{profile?.role || 'creator'}</span>
+            <span className="text-[#6B7280]">Role</span>
+            <span className="font-medium text-[#111111] capitalize">{profile?.role || 'creator'}</span>
           </div>
           <div className="flex justify-between">
-            <span className="text-[#6B7280]">Member Since:</span>
-            <span className="font-semibold text-[#111111]">
+            <span className="text-[#6B7280]">Member Since</span>
+            <span className="font-medium text-[#111111]">
               {profile?.createdAt ? new Date(profile.createdAt).toLocaleDateString('en-IN') : '-'}
             </span>
           </div>
