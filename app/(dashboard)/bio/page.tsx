@@ -1,14 +1,16 @@
 'use client';
-
 import { useUser } from '@clerk/nextjs';
 import { useQuery, useMutation } from 'convex/react';
 import { api } from '@/convex/_generated/api';
 import { Layers, ExternalLink, Copy, Check, Facebook, Instagram, Linkedin, Twitter, Youtube, Save } from 'lucide-react';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
+import { Id } from '@/convex/_generated/dataModel';
+import { useRouter } from 'next/navigation';
 
 export default function BioPage() {
   const { user, isLoaded } = useUser();
+  const router = useRouter();
   const [copied, setCopied] = useState(false);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
@@ -25,8 +27,13 @@ export default function BioPage() {
   const profile = useQuery(api.users.getUserByClerkId, { clerkId: user?.id || '' });
   const links = useQuery(api.links.getEnabledLinksByUser, { userId: profile?._id || '' });
   const updateProfileMutation = useMutation(api.users.updateUserProfile);
+  const createUserMutation = useMutation(api.users.createUser);
+  const [creatingUser, setCreatingUser] = useState(false);
 
-  const bioLink = typeof window !== 'undefined' ? `${window.location.origin}/u/${profile?.username}` : '';
+  // Build bio link - handle loading and undefined states
+  const bioLink = profile?.username
+    ? `${typeof window !== 'undefined' ? window.location.origin : ''}/u/${profile.username}`
+    : '';
 
   useEffect(() => {
     if (profile) {
@@ -41,6 +48,50 @@ export default function BioPage() {
       });
     }
   }, [profile]);
+
+  // Auto-create user in Convex if they exist in Clerk but not in Convex
+  useEffect(() => {
+    if (user && !profile && isLoaded && !creatingUser) {
+      setCreatingUser(true);
+
+      // Generate a proper username from user's actual name or email
+      let generatedUsername = user.username;
+      let displayName = user.fullName || user.firstName || 'User';
+
+      // If no Clerk username, generate from full name or email
+      if (!generatedUsername) {
+        const fullName = user.fullName || `${user.firstName || ''} ${user.lastName || ''}`.trim();
+
+        if (fullName && fullName !== 'User') {
+          // Convert "Piyush Raykhere" → "piyush_raykhere"
+          generatedUsername = fullName.toLowerCase().replace(/\s+/g, '_').replace(/[^a-z0-9_]/g, '');
+        } else if (user.primaryEmailAddress?.emailAddress) {
+          // Use email prefix as username - "piyush@gmail.com" → "piyush"
+          generatedUsername = user.primaryEmailAddress.emailAddress.split('@')[0].toLowerCase().replace(/[^a-z0-9]/g, '');
+        }
+      }
+
+      // Sanitize username - only allow alphanumeric and underscore
+      generatedUsername = (generatedUsername || 'user').replace(/[^a-zA-Z0-9_]/g, '');
+
+      // Add random suffix to ensure uniqueness (4 characters)
+      const suffix = Math.random().toString(36).substring(2, 6);
+      generatedUsername = `${generatedUsername}_${suffix}`;
+
+      createUserMutation({
+        clerkId: user.id,
+        username: generatedUsername,
+        email: user.primaryEmailAddress?.emailAddress || '',
+        displayName: displayName,
+        avatarUrl: user.imageUrl || '',
+      }).then(() => {
+        setTimeout(() => setCreatingUser(false), 2000);
+      }).catch((err) => {
+        console.error('Failed to create user:', err);
+        setCreatingUser(false);
+      });
+    }
+  }, [user, profile, isLoaded, creatingUser, createUserMutation]);
 
   const copyToClipboard = async () => {
     await navigator.clipboard.writeText(bioLink);
@@ -89,7 +140,7 @@ export default function BioPage() {
 
   const remainingChars = 80 - formData.bio.length;
 
-  if (!isLoaded) {
+  if (!isLoaded || !profile) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#2EE6A6]"></div>
