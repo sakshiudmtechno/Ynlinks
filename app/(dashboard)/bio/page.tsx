@@ -1,10 +1,10 @@
 'use client';
-
 import { useUser } from '@clerk/nextjs';
 import { useQuery, useMutation } from 'convex/react';
 import { api } from '@/convex/_generated/api';
 import { Layers, ExternalLink, Copy, Check, Facebook, Instagram, Linkedin, Twitter, Youtube, Save, Camera } from 'lucide-react';
 import { useState, useEffect } from 'react';
+import Link from 'next/link';
 
 export default function BioPage() {
   const { user, isLoaded } = useUser();
@@ -23,8 +23,12 @@ export default function BioPage() {
 
   const profile = useQuery(api.users.getUserByClerkId, { clerkId: user?.id || '' });
   const updateProfileMutation = useMutation(api.users.updateUserProfile);
+  const createUserMutation = useMutation(api.users.createUser);
+  const [creatingUser, setCreatingUser] = useState(false);
 
-  const bioLink = typeof window !== 'undefined' ? `${window.location.origin}/u/${profile?.username}` : '';
+  const bioLink = profile?.username
+    ? `${typeof window !== 'undefined' ? window.location.origin : ''}/u/${profile.username}`
+    : '';
 
   useEffect(() => {
     if (profile) {
@@ -39,6 +43,42 @@ export default function BioPage() {
       });
     }
   }, [profile]);
+
+  useEffect(() => {
+    if (user && !profile && isLoaded && !creatingUser) {
+      setCreatingUser(true);
+
+      let generatedUsername = user.username;
+      let displayName = user.fullName || user.firstName || 'User';
+
+      if (!generatedUsername) {
+        const fullName = user.fullName || `${user.firstName || ''} ${user.lastName || ''}`.trim();
+
+        if (fullName && fullName !== 'User') {
+          generatedUsername = fullName.toLowerCase().replace(/\s+/g, '_').replace(/[^a-z0-9_]/g, '');
+        } else if (user.primaryEmailAddress?.emailAddress) {
+          generatedUsername = user.primaryEmailAddress.emailAddress.split('@')[0].toLowerCase().replace(/[^a-z0-9]/g, '');
+        }
+      }
+
+      generatedUsername = (generatedUsername || 'user').replace(/[^a-zA-Z0-9_]/g, '');
+      const suffix = Math.random().toString(36).substring(2, 6);
+      generatedUsername = `${generatedUsername}_${suffix}`;
+
+      createUserMutation({
+        clerkId: user.id,
+        username: generatedUsername,
+        email: user.primaryEmailAddress?.emailAddress || '',
+        displayName: displayName,
+        avatarUrl: user.imageUrl || '',
+      }).then(() => {
+        setTimeout(() => setCreatingUser(false), 2000);
+      }).catch((err) => {
+        console.error('Failed to create user:', err);
+        setCreatingUser(false);
+      });
+    }
+  }, [user, profile, isLoaded, creatingUser, createUserMutation]);
 
   const copyToClipboard = async () => {
     await navigator.clipboard.writeText(bioLink);
@@ -87,7 +127,7 @@ export default function BioPage() {
 
   const remainingChars = 80 - formData.bio.length;
 
-  if (!isLoaded) {
+  if (!isLoaded || !profile) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-[#2EE6A6]"></div>
@@ -96,185 +136,189 @@ export default function BioPage() {
   }
 
   return (
-    <div className="max-w-2xl mx-auto space-y-4">
-      {/* Header */}
-      <div className="flex items-center gap-3">
-        <div className="w-9 h-9 bg-gradient-to-br from-[#2EE6A6] to-[#1FD695] rounded-lg flex items-center justify-center">
-          <Layers className="w-4 h-4 text-white" />
+    <div className="max-w-4xl mx-auto space-y-6">
+      <div className="flex items-center gap-3 mb-2">
+        <div className="w-10 h-10 bg-gradient-to-br from-[#2EE6A6] to-[#1FD695] rounded-xl flex items-center justify-center">
+          <Layers className="w-5 h-5 text-white" />
         </div>
         <div>
-          <h1 className="text-xl font-bold text-[#111111]">My Bio Page</h1>
-          <p className="text-xs text-[#6B7280]">Preview and share your public profile</p>
+          <h1 className="text-2xl font-bold text-[#111111]">My Bio Page</h1>
+          <p className="text-sm text-[#6B7280]">Preview and share your public profile</p>
         </div>
       </div>
 
-      {/* Share Link Card */}
-      <div className="bg-white rounded-xl border border-gray-200 p-4">
-        <div className="flex items-center justify-between gap-3">
-          <div className="flex-1 min-w-0">
-            <p className="text-xs text-[#6B7280] mb-1">Your Bio Link</p>
-            <input
-              type="text"
-              value={bioLink}
-              readOnly
-              className="w-full border border-gray-200 rounded-lg px-3 py-2 bg-gray-50 text-[#6B7280] font-mono text-xs truncate"
-            />
-          </div>
+      {/* Share Your Link */}
+      <div className="bg-white rounded-2xl border border-gray-200 p-6 shadow-sm">
+        <h3 className="text-lg font-semibold text-[#111111] mb-4">Your Bio Link</h3>
+        <p className="text-[#6B7280] text-sm mb-4">Share your custom bio link on all your social media platforms to start earning!</p>
+        <div className="flex gap-3">
+          <input
+            type="text"
+            value={bioLink}
+            readOnly
+            className="flex-1 border-2 border-gray-200 rounded-xl px-4 py-3 bg-gray-50 text-[#6B7280] font-mono text-sm"
+          />
           <button
             onClick={copyToClipboard}
-            className={`px-4 py-2 rounded-lg text-sm font-semibold transition-all flex items-center gap-1.5 whitespace-nowrap ${
-              copied ? 'bg-green-500 text-white' : 'bg-[#2EE6A6] text-white hover:bg-[#1FD695]'
+            className={`px-6 py-3 rounded-xl hover:bg-[#1FD695] transition-all flex items-center gap-2 font-semibold shadow-lg ${
+              copied ? 'bg-green-500 text-white' : 'bg-[#2EE6A6] text-white'
             }`}
           >
-            {copied ? <Check size={14} /> : <Copy size={14} />}
-            {copied ? 'Copied' : 'Copy'}
+            {copied ? <Check className="h-5 w-5" /> : <Copy className="h-5 w-5" />}
+            {copied ? 'Copied!' : 'Copy Link'}
           </button>
         </div>
         <a
           href={bioLink}
           target="_blank"
           rel="noopener noreferrer"
-          className="inline-flex items-center gap-1.5 mt-3 text-xs font-medium text-[#2EE6A6] hover:text-[#1FD695]"
+          className="inline-flex items-center gap-2 mt-3 text-sm font-semibold text-[#2EE6A6] hover:text-[#1FD695] transition-colors"
         >
-          <ExternalLink size={12} />
-          View public page
+          <ExternalLink size={16} />
+          View your public page
         </a>
       </div>
 
-      {/* Profile Info Card */}
-      <form onSubmit={handleSubmit} className="space-y-4">
-        <div className="bg-white rounded-xl border border-gray-200 p-4">
-          <div className="flex items-center gap-4 mb-4">
-            <div className="relative">
+      {/* Bio Page Settings */}
+      <form onSubmit={handleSubmit} className="space-y-6">
+        {/* Profile Info */}
+        <div className="bg-white rounded-2xl border border-gray-200 p-6 shadow-sm">
+          <h3 className="text-lg font-semibold text-[#111111] mb-6">Profile Information</h3>
+
+          <div className="flex items-start gap-6 mb-6">
+            <div className="flex-shrink-0">
               {formData.avatarUrl ? (
                 <div className="relative group">
-                  <img src={formData.avatarUrl} alt="Avatar" className="w-16 h-16 rounded-full object-cover border-2 border-[#2EE6A6]" />
-                  <label className="absolute inset-0 bg-black/50 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 cursor-pointer">
+                  <img src={formData.avatarUrl} alt="Avatar" className="w-24 h-24 rounded-full object-cover border-4 border-[#2EE6A6]" />
+                  <label className="absolute inset-0 bg-black/50 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer">
                     <input type="file" accept="image/*" onChange={handleImageUpload} className="hidden" />
-                    <Camera size={16} className="text-white" />
+                    <span className="text-white text-sm font-semibold">Change</span>
                   </label>
                 </div>
               ) : (
-                <label className="w-16 h-16 rounded-full bg-gradient-to-br from-[#2EE6A6] to-[#1FD695] flex items-center justify-center cursor-pointer hover:opacity-90">
+                <label className="w-24 h-24 rounded-full bg-gradient-to-br from-[#2EE6A6] to-[#1FD695] flex items-center justify-center cursor-pointer hover:opacity-80 transition-opacity">
                   <input type="file" accept="image/*" onChange={handleImageUpload} className="hidden" />
-                  <span className="text-2xl font-bold text-white">{(profile?.displayName || profile?.username || 'U').charAt(0).toUpperCase()}</span>
+                  <span className="text-4xl font-bold text-white">{(profile?.displayName || profile?.username || 'U').charAt(0).toUpperCase()}</span>
                 </label>
               )}
             </div>
-            <div>
-              <h3 className="font-semibold text-[#111111]">{profile?.displayName || profile?.username}</h3>
-              <p className="text-xs text-[#6B7280]">@{profile?.username}</p>
+            <div className="flex-1">
+              <h4 className="text-xl font-bold text-[#111111] mb-1">{profile?.displayName || profile?.username}</h4>
+              <p className="text-[#6B7280]">@{profile?.username}</p>
             </div>
           </div>
 
           <div>
-            <label className="block text-xs font-medium text-[#111111] mb-1.5">
-              Bio <span className="text-[#6B7280] font-normal">(max 80 chars)</span>
+            <label className="block text-sm font-semibold text-[#111111] mb-2">
+              Bio <span className="text-[#6B7280] font-normal">(max 80 characters)</span>
             </label>
             <textarea
               value={formData.bio}
               onChange={(e) => setFormData({ ...formData, bio: e.target.value })}
               maxLength={80}
-              rows={2}
+              rows={3}
               placeholder="Tell visitors about yourself..."
-              className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#2EE6A6] resize-none"
+              className="w-full border-2 border-gray-200 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-[#2EE6A6] focus:border-transparent transition-all resize-none"
             />
-            <p className="text-xs text-[#6B7280] mt-1 text-right">{remainingChars} left</p>
+            <p className="text-xs text-[#6B7280] mt-1 text-right">{remainingChars} characters remaining</p>
           </div>
         </div>
 
-        {/* Social Links Card */}
-        <div className="bg-white rounded-xl border border-gray-200 p-4">
-          <h3 className="text-sm font-semibold text-[#111111] mb-3">Social Media Links</h3>
-          <div className="space-y-2.5">
-            <div className="flex items-center gap-2">
-              <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center flex-shrink-0">
-                <Facebook className="w-4 h-4 text-white" />
+        {/* Social Links */}
+        <div className="bg-white rounded-2xl border border-gray-200 p-6 shadow-sm">
+          <h3 className="text-lg font-semibold text-[#111111] mb-6">Social Media Links</h3>
+          <p className="text-[#6B7280] text-sm mb-6">Add your social media profiles to display on your public page</p>
+
+          <div className="space-y-4">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center">
+                <Facebook className="w-5 h-5 text-white" />
               </div>
               <input
                 type="url"
                 value={formData.facebookUrl}
                 onChange={(e) => setFormData({ ...formData, facebookUrl: e.target.value })}
-                placeholder="Facebook URL"
-                className="flex-1 border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#2EE6A6]"
+                placeholder="https://facebook.com/yourprofile"
+                className="flex-1 border-2 border-gray-200 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-[#2EE6A6] focus:border-transparent transition-all text-sm"
               />
             </div>
 
-            <div className="flex items-center gap-2">
-              <div className="w-8 h-8 bg-gradient-to-br from-purple-500 via-pink-500 to-orange-500 rounded-lg flex items-center justify-center flex-shrink-0">
-                <Instagram className="w-4 h-4 text-white" />
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 bg-gradient-to-br from-purple-500 via-pink-500 to-orange-500 rounded-lg flex items-center justify-center">
+                <Instagram className="w-5 h-5 text-white" />
               </div>
               <input
                 type="url"
                 value={formData.instagramUrl}
                 onChange={(e) => setFormData({ ...formData, instagramUrl: e.target.value })}
-                placeholder="Instagram URL"
-                className="flex-1 border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#2EE6A6]"
+                placeholder="https://instagram.com/yourprofile"
+                className="flex-1 border-2 border-gray-200 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-[#2EE6A6] focus:border-transparent transition-all text-sm"
               />
             </div>
 
-            <div className="flex items-center gap-2">
-              <div className="w-8 h-8 bg-blue-700 rounded-lg flex items-center justify-center flex-shrink-0">
-                <Linkedin className="w-4 h-4 text-white" />
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 bg-blue-700 rounded-lg flex items-center justify-center">
+                <Linkedin className="w-5 h-5 text-white" />
               </div>
               <input
                 type="url"
                 value={formData.linkedinUrl}
                 onChange={(e) => setFormData({ ...formData, linkedinUrl: e.target.value })}
-                placeholder="LinkedIn URL"
-                className="flex-1 border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#2EE6A6]"
+                placeholder="https://linkedin.com/in/yourprofile"
+                className="flex-1 border-2 border-gray-200 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-[#2EE6A6] focus:border-transparent transition-all text-sm"
               />
             </div>
 
-            <div className="flex items-center gap-2">
-              <div className="w-8 h-8 bg-black rounded-lg flex items-center justify-center flex-shrink-0">
-                <Twitter className="w-4 h-4 text-white" />
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 bg-black rounded-lg flex items-center justify-center">
+                <Twitter className="w-5 h-5 text-white" />
               </div>
               <input
                 type="url"
                 value={formData.twitterUrl}
                 onChange={(e) => setFormData({ ...formData, twitterUrl: e.target.value })}
-                placeholder="Twitter URL"
-                className="flex-1 border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#2EE6A6]"
+                placeholder="https://twitter.com/yourprofile"
+                className="flex-1 border-2 border-gray-200 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-[#2EE6A6] focus:border-transparent transition-all text-sm"
               />
             </div>
 
-            <div className="flex items-center gap-2">
-              <div className="w-8 h-8 bg-red-600 rounded-lg flex items-center justify-center flex-shrink-0">
-                <Youtube className="w-4 h-4 text-white" />
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 bg-red-600 rounded-lg flex items-center justify-center">
+                <Youtube className="w-5 h-5 text-white" />
               </div>
               <input
                 type="url"
                 value={formData.youtubeUrl}
                 onChange={(e) => setFormData({ ...formData, youtubeUrl: e.target.value })}
-                placeholder="YouTube URL"
-                className="flex-1 border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#2EE6A6]"
+                placeholder="https://youtube.com/@yourchannel"
+                className="flex-1 border-2 border-gray-200 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-[#2EE6A6] focus:border-transparent transition-all text-sm"
               />
             </div>
           </div>
         </div>
 
-        {/* Save Button */}
         <button
           type="submit"
           disabled={saving}
-          className={`w-full py-3 rounded-xl font-semibold transition-all flex items-center justify-center gap-2 ${
-            saved ? 'bg-green-500 text-white' : 'bg-[#2EE6A6] text-white hover:bg-[#1FD695]'
+          className={`w-full py-4 rounded-xl font-semibold text-lg transition-all flex items-center justify-center gap-2 shadow-lg ${
+            saved
+              ? 'bg-green-500 text-white'
+              : 'bg-[#2EE6A6] text-white hover:bg-[#1FD695]'
           }`}
         >
           {saving ? (
             <>
-              <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"></div>
+              <div className="animate-spin rounded-full h-5 w-5 border-2 border-white border-t-transparent"></div>
               Saving...
             </>
           ) : saved ? (
             <>
-              <Check size={16} />
+              <Check className="h-5 w-5" />
               Saved!
             </>
           ) : (
             <>
-              <Save size={16} />
+              <Save className="h-5 w-5" />
               Save Changes
             </>
           )}

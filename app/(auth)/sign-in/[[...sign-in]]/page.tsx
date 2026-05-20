@@ -8,8 +8,8 @@ export default function SignInPage() {
       <div className="w-full lg:w-1/2 flex flex-col justify-center p-8">
         <div className="max-w-md mx-auto w-full">
           {/* YNLINKS Logo - Left corner, larger */}
-          <div className="mb-8">
-            <div className="relative w-14 h-14">
+          <div className="mb-4">
+            <div className="relative w-34 h-14">
               <Image
                 src="/logoYnLinks.jpeg"
                 alt="YNLINKS"
@@ -21,7 +21,7 @@ export default function SignInPage() {
 
           {/* Heading - Centered */}
           <div className="text-center mb-8">
-            <h1 className="text-3xl font-bold text-black">Welcome back</h1>
+            {/* <h1 className="text-3xl font-bold text-black">Welcome back</h1> */}
             <p className="text-gray-500 mt-1">Sign in to your YNLINKS account</p>
           </div>
 
