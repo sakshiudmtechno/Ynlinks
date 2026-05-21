@@ -2,9 +2,38 @@
 import { useUser } from '@clerk/nextjs';
 import { useQuery, useMutation } from 'convex/react';
 import { api } from '@/convex/_generated/api';
-import { Layers, ExternalLink, Copy, Check, Facebook, Instagram, Linkedin, Twitter, Youtube, Save } from 'lucide-react';
+import { ExternalLink, Copy, Check, Facebook, Instagram, Linkedin, Twitter, Youtube, Save } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { BioPreview } from '@/components/BioPreview';
+
+type Theme = 'warm-ink' | 'pure' | 'forest' | 'ocean' | 'rose' | 'amber' | 'slate' | 'parchment';
+type ButtonStyle = 'pill' | 'rounded' | 'square' | 'sharp';
+type FontStyle = 'fraunces' | 'dm-sans' | 'georgia' | 'mono';
+
+const themes = [
+  { id: 'warm-ink', name: 'Warm Ink', colors: ['#1a1a1a', '#2d2d2d'] },
+  { id: 'pure', name: 'Pure', colors: ['#ffffff', '#f5f5f5'] },
+  { id: 'forest', name: 'Forest', colors: ['#0f2318', '#1a3d2b'] },
+  { id: 'ocean', name: 'Ocean', colors: ['#0a1628', '#1a2d4d'] },
+  { id: 'rose', name: 'Rose', colors: ['#2d1a1f', '#4d2830'] },
+  { id: 'amber', name: 'Amber', colors: ['#1a1508', '#3d2f10'] },
+  { id: 'slate', name: 'Slate', colors: ['#1e293b', '#334155'] },
+  { id: 'parchment', name: 'Parchment', colors: ['#fef9f0', '#f5ebe0'] },
+] as const;
+
+const buttonStyles = [
+  { id: 'pill', name: 'Pill' },
+  { id: 'rounded', name: 'Rounded' },
+  { id: 'square', name: 'Square' },
+  { id: 'sharp', name: 'Sharp' },
+] as const;
+
+const fontStyles = [
+  { id: 'fraunces', name: 'Fraunces', family: 'serif' },
+  { id: 'dm-sans', name: 'DM Sans', family: 'sans-serif' },
+  { id: 'georgia', name: 'Georgia', family: 'serif' },
+  { id: 'mono', name: 'Mono', family: 'monospace' },
+] as const;
 
 export default function BioPage() {
   const { user, isLoaded } = useUser();
@@ -20,6 +49,9 @@ export default function BioPage() {
     twitterUrl: '',
     youtubeUrl: '',
   });
+  const [selectedTheme, setSelectedTheme] = useState<Theme>('parchment');
+  const [selectedButtonStyle, setSelectedButtonStyle] = useState<ButtonStyle>('pill');
+  const [selectedFontStyle, setSelectedFontStyle] = useState<FontStyle>('dm-sans');
 
   const profile = useQuery(api.users.getUserByClerkId, { clerkId: user?.id || '' });
   const updateProfileMutation = useMutation(api.users.updateUserProfile);
@@ -41,6 +73,9 @@ export default function BioPage() {
         twitterUrl: profile.twitterUrl || '',
         youtubeUrl: profile.youtubeUrl || '',
       });
+      if (profile.theme) setSelectedTheme(profile.theme as Theme);
+      if (profile.buttonStyle) setSelectedButtonStyle(profile.buttonStyle as ButtonStyle);
+      if (profile.fontStyle) setSelectedFontStyle(profile.fontStyle as FontStyle);
     }
   }, [profile]);
 
@@ -110,11 +145,14 @@ export default function BioPage() {
         userId: profile._id,
         bio: formData.bio,
         avatarUrl: formData.avatarUrl,
-        facebookUrl: formData.facebookUrl || undefined,
-        instagramUrl: formData.instagramUrl || undefined,
-        linkedinUrl: formData.linkedinUrl || undefined,
-        twitterUrl: formData.twitterUrl || undefined,
-        youtubeUrl: formData.youtubeUrl || undefined,
+        facebookUrl: formData.facebookUrl,
+        instagramUrl: formData.instagramUrl,
+        linkedinUrl: formData.linkedinUrl,
+        twitterUrl: formData.twitterUrl,
+        youtubeUrl: formData.youtubeUrl,
+        theme: selectedTheme,
+        buttonStyle: selectedButtonStyle,
+        fontStyle: selectedFontStyle,
       });
       setSaved(true);
       setTimeout(() => setSaved(false), 2000);
@@ -138,13 +176,19 @@ export default function BioPage() {
   return (
     <div className="max-w-7xl mx-auto">
       {/* Header */}
-      <div className="flex items-center gap-3 mb-2">
-        {/* <div className="w-10 h-10 bg-gradient-to-br from-[#2EE6A6] to-[#1FD695] rounded-xl flex items-center justify-center">
-          <Layers className="w-5 h-5 text-white" />
+      <div className="flex items-center gap-3 mb-6">
+        {/* <div className="w-8 h-8 bg-[#111111] rounded-full flex items-center justify-center">
+          <span className="text-white text-sm font-medium">3</span>
         </div> */}
         {/* <div>
-          <h1 className="text-2xl font-bold text-[#111111]">My Bio Page</h1>
-          <p className="text-sm text-[#6B7280]">Preview and share your public profile</p>
+          <h1 className="text-2xl font-bold text-[#111111]">Appearance</h1>
+          <p className="text-sm text-[#6B7280]">Theme, colors, fonts and button styles</p>
+        </div>
+        <div className="ml-auto flex items-center gap-2 bg-green-50 text-green-700 px-3 py-1.5 rounded-full text-xs font-medium">
+          <span>Complete</span>
+          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M5 15l7-7 7 7" />
+          </svg>
         </div> */}
       </div>
 
@@ -152,8 +196,282 @@ export default function BioPage() {
       <div className="grid grid-cols-1 lg:grid-cols-[1fr_360px] gap-6">
         {/* Left Column - Form Content */}
         <div className="space-y-6">
-          {/* Share Your Link */}
+
           <div className="bg-white rounded-2xl border border-gray-200 p-6 shadow-sm">
+            <h3 className="text-lg font-semibold text-[#111111] mb-4">Your Bio Link</h3>
+            <p className="text-[#6B7280] text-sm mb-4">Share your custom bio link on all your social media platforms to start earning!</p>
+            <div className="flex gap-3">
+              <input
+                type="text"
+                value={bioLink}
+                readOnly
+                className="flex-1 border-2 border-gray-200 rounded-xl px-4 py-3 bg-gray-50 text-[#6B7280] font-mono text-sm"
+              />
+              <button
+                onClick={copyToClipboard}
+                className={`px-6 py-3 rounded-xl hover:bg-[#1FD695] transition-all flex items-center gap-2 font-semibold shadow-lg ${copied ? 'bg-green-500 text-white' : 'bg-[#2EE6A6] text-white'
+                  }`}
+              >
+                {copied ? <Check className="h-5 w-5" /> : <Copy className="h-5 w-5" />}
+                {copied ? 'Copied!' : 'Copy Link'}
+              </button>
+            </div>
+            <a
+              href={bioLink}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-2 mt-3 text-sm font-semibold text-[#2EE6A6] hover:text-[#1FD695] transition-colors"
+            >
+              <ExternalLink size={16} />
+              View your public page
+            </a>
+          </div>
+
+          <div className="bg-white rounded-2xl border border-gray-200 p-6 shadow-sm">
+            <h3 className="text-lg font-semibold text-[#111111] mb-6">Profile Information</h3>
+
+            <div className="flex items-start gap-6 mb-6">
+              <div className="flex-shrink-0">
+                {formData.avatarUrl ? (
+                  <div className="relative group">
+                    <img src={formData.avatarUrl} alt="Avatar" className="w-24 h-24 rounded-full object-cover border-4 border-[#2EE6A6]" />
+                    <label className="absolute inset-0 bg-black/50 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer">
+                      <input type="file" accept="image/*" onChange={handleImageUpload} className="hidden" />
+                      <span className="text-white text-sm font-semibold">Change</span>
+                    </label>
+                  </div>
+                ) : (
+                  <label className="w-24 h-24 rounded-full bg-gradient-to-br from-[#2EE6A6] to-[#1FD695] flex items-center justify-center cursor-pointer hover:opacity-80 transition-opacity">
+                    <input type="file" accept="image/*" onChange={handleImageUpload} className="hidden" />
+                    <span className="text-4xl font-bold text-white">{(profile?.displayName || profile?.username || 'U').charAt(0).toUpperCase()}</span>
+                  </label>
+                )}
+              </div>
+              <div className="flex-1">
+                <h4 className="text-xl font-bold text-[#111111] mb-1">{profile?.displayName || profile?.username}</h4>
+                <p className="text-[#6B7280]">@{profile?.username}</p>
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-sm font-semibold text-[#111111] mb-2">
+                Bio <span className="text-[#6B7280] font-normal">(max 80 characters)</span>
+              </label>
+              <textarea
+                value={formData.bio}
+                onChange={(e) => setFormData({ ...formData, bio: e.target.value })}
+                maxLength={80}
+                rows={3}
+                placeholder="Tell visitors about yourself..."
+                className="w-full border-2 border-gray-200 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-[#2EE6A6] focus:border-transparent transition-all resize-none"
+              />
+              <p className="text-xs text-[#6B7280] mt-1 text-right">{remainingChars} characters remaining</p>
+            </div>
+          </div>
+
+
+
+          {/* Theme Presets */}
+          <div className="bg-white rounded-2xl border border-gray-200 p-6 shadow-sm">
+            <h3 className="text-lg font-semibold text-[#111111] mb-4">Theme</h3>
+            <div className="grid grid-cols-4 gap-3">
+              {themes.map((theme) => (
+                <button
+                  key={theme.id}
+                  onClick={() => setSelectedTheme(theme.id)}
+                  className={`relative rounded-xl overflow-hidden aspect-square group transition-all ${selectedTheme === theme.id
+                    ? 'ring-2 ring-black ring-offset-2'
+                    : 'ring-1 ring-gray-200 hover:ring-gray-400'
+                    }`}
+                >
+                  <div
+                    className="absolute inset-0"
+                    style={{
+                      background: `linear-gradient(135deg, ${theme.colors[0]} 50%, ${theme.colors[1]} 50%)`,
+                    }}
+                  />
+                  {selectedTheme === theme.id && (
+                    <div className="absolute top-1 right-1 w-4 h-4 bg-black rounded-full flex items-center justify-center">
+                      <svg className="w-2.5 h-2.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                      </svg>
+                    </div>
+                  )}
+                  <span className="absolute bottom-1 left-1.5 text-[8px] font-medium text-white drop-shadow-md">
+                    {theme.name}
+                  </span>
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Button Style */}
+          <div className="bg-white rounded-2xl border border-gray-200 p-6 shadow-sm">
+            <h3 className="text-lg font-semibold text-[#111111] mb-4">Button Style</h3>
+            <div className="grid grid-cols-4 gap-3">
+              {buttonStyles.map((style) => (
+                <button
+                  key={style.id}
+                  onClick={() => setSelectedButtonStyle(style.id)}
+                  className={`py-3 px-4 border-2 transition-all ${selectedButtonStyle === style.id
+                    ? 'border-black bg-black text-white'
+                    : 'border-gray-200 bg-white text-[#111111] hover:border-gray-400'
+                    } ${style.id === 'pill' ? 'rounded-full' :
+                      style.id === 'rounded' ? 'rounded-xl' :
+                        style.id === 'square' ? 'rounded-lg' : 'rounded'
+                    }`}
+                >
+                  <span className="text-sm font-medium">{style.name}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Typography */}
+          <div className="bg-white rounded-2xl border border-gray-200 p-6 shadow-sm">
+            <h3 className="text-lg font-semibold text-[#111111] mb-4">Typography</h3>
+            <div className="grid grid-cols-2 gap-3">
+              {fontStyles.map((font) => (
+                <button
+                  key={font.id}
+                  onClick={() => setSelectedFontStyle(font.id)}
+                  className={`p-4 border-2 text-left transition-all ${selectedFontStyle === font.id
+                    ? 'border-black bg-black text-white'
+                    : 'border-gray-200 bg-white text-[#111111] hover:border-gray-400'
+                    }`}
+                >
+                  <p
+                    className={`text-lg mb-1 ${font.family === 'serif' ? 'font-serif' : font.family === 'sans-serif' ? 'font-sans' : 'font-mono'}`}
+                  >
+                    {font.name}
+                  </p>
+                  <p className={`text-[10px] ${font.family === 'serif' ? 'font-serif' : font.family === 'sans-serif' ? 'font-sans' : 'font-mono'} ${selectedFontStyle === font.id ? 'text-gray-300' : 'text-gray-400'
+                    }`}>
+                    Aa Bb Cc 123
+                  </p>
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Profile Info */}
+          {/* <div className="bg-white rounded-2xl border border-gray-200 p-6 shadow-sm">
+            <h3 className="text-lg font-semibold text-[#111111] mb-6">Profile Information</h3>
+
+            <div className="flex items-start gap-6 mb-6">
+              <div className="flex-shrink-0">
+                {formData.avatarUrl ? (
+                  <div className="relative group">
+                    <img src={formData.avatarUrl} alt="Avatar" className="w-24 h-24 rounded-full object-cover border-4 border-[#2EE6A6]" />
+                    <label className="absolute inset-0 bg-black/50 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer">
+                      <input type="file" accept="image/*" onChange={handleImageUpload} className="hidden" />
+                      <span className="text-white text-sm font-semibold">Change</span>
+                    </label>
+                  </div>
+                ) : (
+                  <label className="w-24 h-24 rounded-full bg-gradient-to-br from-[#2EE6A6] to-[#1FD695] flex items-center justify-center cursor-pointer hover:opacity-80 transition-opacity">
+                    <input type="file" accept="image/*" onChange={handleImageUpload} className="hidden" />
+                    <span className="text-4xl font-bold text-white">{(profile?.displayName || profile?.username || 'U').charAt(0).toUpperCase()}</span>
+                  </label>
+                )}
+              </div>
+              <div className="flex-1">
+                <h4 className="text-xl font-bold text-[#111111] mb-1">{profile?.displayName || profile?.username}</h4>
+                <p className="text-[#6B7280]">@{profile?.username}</p>
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-sm font-semibold text-[#111111] mb-2">
+                Bio <span className="text-[#6B7280] font-normal">(max 80 characters)</span>
+              </label>
+              <textarea
+                value={formData.bio}
+                onChange={(e) => setFormData({ ...formData, bio: e.target.value })}
+                maxLength={80}
+                rows={3}
+                placeholder="Tell visitors about yourself..."
+                className="w-full border-2 border-gray-200 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-[#2EE6A6] focus:border-transparent transition-all resize-none"
+              />
+              <p className="text-xs text-[#6B7280] mt-1 text-right">{remainingChars} characters remaining</p>
+            </div>
+          </div> */}
+
+          {/* Social Links */}
+          <div className="bg-white rounded-2xl border border-gray-200 p-6 shadow-sm">
+            <h3 className="text-lg font-semibold text-[#111111] mb-6">Social Media Links</h3>
+            <p className="text-[#6B7280] text-sm mb-6">Add your social media profiles to display on your public page</p>
+
+            <div className="space-y-4">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center">
+                  <Facebook className="w-5 h-5 text-white" />
+                </div>
+                <input
+                  type="url"
+                  value={formData.facebookUrl}
+                  onChange={(e) => setFormData({ ...formData, facebookUrl: e.target.value })}
+                  placeholder="https://facebook.com/yourprofile"
+                  className="flex-1 border-2 border-gray-200 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-[#2EE6A6] focus:border-transparent transition-all text-sm"
+                />
+              </div>
+
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 bg-gradient-to-br from-purple-500 via-pink-500 to-orange-500 rounded-lg flex items-center justify-center">
+                  <Instagram className="w-5 h-5 text-white" />
+                </div>
+                <input
+                  type="url"
+                  value={formData.instagramUrl}
+                  onChange={(e) => setFormData({ ...formData, instagramUrl: e.target.value })}
+                  placeholder="https://instagram.com/yourprofile"
+                  className="flex-1 border-2 border-gray-200 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-[#2EE6A6] focus:border-transparent transition-all text-sm"
+                />
+              </div>
+
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 bg-blue-700 rounded-lg flex items-center justify-center">
+                  <Linkedin className="w-5 h-5 text-white" />
+                </div>
+                <input
+                  type="url"
+                  value={formData.linkedinUrl}
+                  onChange={(e) => setFormData({ ...formData, linkedinUrl: e.target.value })}
+                  placeholder="https://linkedin.com/in/yourprofile"
+                  className="flex-1 border-2 border-gray-200 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-[#2EE6A6] focus:border-transparent transition-all text-sm"
+                />
+              </div>
+
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 bg-black rounded-lg flex items-center justify-center">
+                  <Twitter className="w-5 h-5 text-white" />
+                </div>
+                <input
+                  type="url"
+                  value={formData.twitterUrl}
+                  onChange={(e) => setFormData({ ...formData, twitterUrl: e.target.value })}
+                  placeholder="https://twitter.com/yourprofile"
+                  className="flex-1 border-2 border-gray-200 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-[#2EE6A6] focus:border-transparent transition-all text-sm"
+                />
+              </div>
+
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 bg-red-600 rounded-lg flex items-center justify-center">
+                  <Youtube className="w-5 h-5 text-white" />
+                </div>
+                <input
+                  type="url"
+                  value={formData.youtubeUrl}
+                  onChange={(e) => setFormData({ ...formData, youtubeUrl: e.target.value })}
+                  placeholder="https://youtube.com/@yourchannel"
+                  className="flex-1 border-2 border-gray-200 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-[#2EE6A6] focus:border-transparent transition-all text-sm"
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* Bio Link */}
+          {/* <div className="bg-white rounded-2xl border border-gray-200 p-6 shadow-sm">
             <h3 className="text-lg font-semibold text-[#111111] mb-4">Your Bio Link</h3>
             <p className="text-[#6B7280] text-sm mb-4">Share your custom bio link on all your social media platforms to start earning!</p>
             <div className="flex gap-3">
@@ -182,153 +500,35 @@ export default function BioPage() {
               <ExternalLink size={16} />
               View your public page
             </a>
-          </div>
+          </div> */}
 
-          {/* Bio Page Settings */}
-          <form onSubmit={handleSubmit} className="space-y-6">
-            {/* Profile Info */}
-            <div className="bg-white rounded-2xl border border-gray-200 p-6 shadow-sm">
-              <h3 className="text-lg font-semibold text-[#111111] mb-6">Profile Information</h3>
-
-              <div className="flex items-start gap-6 mb-6">
-                <div className="flex-shrink-0">
-                  {formData.avatarUrl ? (
-                    <div className="relative group">
-                      <img src={formData.avatarUrl} alt="Avatar" className="w-24 h-24 rounded-full object-cover border-4 border-[#2EE6A6]" />
-                      <label className="absolute inset-0 bg-black/50 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer">
-                        <input type="file" accept="image/*" onChange={handleImageUpload} className="hidden" />
-                        <span className="text-white text-sm font-semibold">Change</span>
-                      </label>
-                    </div>
-                  ) : (
-                    <label className="w-24 h-24 rounded-full bg-gradient-to-br from-[#2EE6A6] to-[#1FD695] flex items-center justify-center cursor-pointer hover:opacity-80 transition-opacity">
-                      <input type="file" accept="image/*" onChange={handleImageUpload} className="hidden" />
-                      <span className="text-4xl font-bold text-white">{(profile?.displayName || profile?.username || 'U').charAt(0).toUpperCase()}</span>
-                    </label>
-                  )}
-                </div>
-                <div className="flex-1">
-                  <h4 className="text-xl font-bold text-[#111111] mb-1">{profile?.displayName || profile?.username}</h4>
-                  <p className="text-[#6B7280]">@{profile?.username}</p>
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-sm font-semibold text-[#111111] mb-2">
-                  Bio <span className="text-[#6B7280] font-normal">(max 80 characters)</span>
-                </label>
-                <textarea
-                  value={formData.bio}
-                  onChange={(e) => setFormData({ ...formData, bio: e.target.value })}
-                  maxLength={80}
-                  rows={3}
-                  placeholder="Tell visitors about yourself..."
-                  className="w-full border-2 border-gray-200 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-[#2EE6A6] focus:border-transparent transition-all resize-none"
-                />
-                <p className="text-xs text-[#6B7280] mt-1 text-right">{remainingChars} characters remaining</p>
-              </div>
-            </div>
-
-            {/* Social Links */}
-            <div className="bg-white rounded-2xl border border-gray-200 p-6 shadow-sm">
-              <h3 className="text-lg font-semibold text-[#111111] mb-6">Social Media Links</h3>
-              <p className="text-[#6B7280] text-sm mb-6">Add your social media profiles to display on your public page</p>
-
-              <div className="space-y-4">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center">
-                    <Facebook className="w-5 h-5 text-white" />
-                  </div>
-                  <input
-                    type="url"
-                    value={formData.facebookUrl}
-                    onChange={(e) => setFormData({ ...formData, facebookUrl: e.target.value })}
-                    placeholder="https://facebook.com/yourprofile"
-                    className="flex-1 border-2 border-gray-200 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-[#2EE6A6] focus:border-transparent transition-all text-sm"
-                  />
-                </div>
-
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 bg-gradient-to-br from-purple-500 via-pink-500 to-orange-500 rounded-lg flex items-center justify-center">
-                    <Instagram className="w-5 h-5 text-white" />
-                  </div>
-                  <input
-                    type="url"
-                    value={formData.instagramUrl}
-                    onChange={(e) => setFormData({ ...formData, instagramUrl: e.target.value })}
-                    placeholder="https://instagram.com/yourprofile"
-                    className="flex-1 border-2 border-gray-200 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-[#2EE6A6] focus:border-transparent transition-all text-sm"
-                  />
-                </div>
-
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 bg-blue-700 rounded-lg flex items-center justify-center">
-                    <Linkedin className="w-5 h-5 text-white" />
-                  </div>
-                  <input
-                    type="url"
-                    value={formData.linkedinUrl}
-                    onChange={(e) => setFormData({ ...formData, linkedinUrl: e.target.value })}
-                    placeholder="https://linkedin.com/in/yourprofile"
-                    className="flex-1 border-2 border-gray-200 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-[#2EE6A6] focus:border-transparent transition-all text-sm"
-                  />
-                </div>
-
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 bg-black rounded-lg flex items-center justify-center">
-                    <Twitter className="w-5 h-5 text-white" />
-                  </div>
-                  <input
-                    type="url"
-                    value={formData.twitterUrl}
-                    onChange={(e) => setFormData({ ...formData, twitterUrl: e.target.value })}
-                    placeholder="https://twitter.com/yourprofile"
-                    className="flex-1 border-2 border-gray-200 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-[#2EE6A6] focus:border-transparent transition-all text-sm"
-                  />
-                </div>
-
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 bg-red-600 rounded-lg flex items-center justify-center">
-                    <Youtube className="w-5 h-5 text-white" />
-                  </div>
-                  <input
-                    type="url"
-                    value={formData.youtubeUrl}
-                    onChange={(e) => setFormData({ ...formData, youtubeUrl: e.target.value })}
-                    placeholder="https://youtube.com/@yourchannel"
-                    className="flex-1 border-2 border-gray-200 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-[#2EE6A6] focus:border-transparent transition-all text-sm"
-                  />
-                </div>
-              </div>
-            </div>
-
-            <button
-              type="submit"
-              disabled={saving}
-              className={`w-full py-4 rounded-xl font-semibold text-lg transition-all flex items-center justify-center gap-2 shadow-lg ${
-                saved
-                  ? 'bg-green-500 text-white'
-                  : 'bg-[#2EE6A6] text-white hover:bg-[#1FD695]'
+          {/* Save Button */}
+          <button
+            type="button"
+            onClick={handleSubmit}
+            disabled={saving}
+            className={`w-full py-4 rounded-xl font-semibold text-lg transition-all flex items-center justify-center gap-2 shadow-lg ${saved
+              ? 'bg-green-500 text-white'
+              : 'bg-[#2EE6A6] text-white hover:bg-[#1FD695]'
               }`}
-            >
-              {saving ? (
-                <>
-                  <div className="animate-spin rounded-full h-5 w-5 border-2 border-white border-t-transparent"></div>
-                  Saving...
-                </>
-              ) : saved ? (
-                <>
-                  <Check className="h-5 w-5" />
-                  Saved!
-                </>
-              ) : (
-                <>
-                  <Save className="h-5 w-5" />
-                  Save Changes
-                </>
-              )}
-            </button>
-          </form>
+          >
+            {saving ? (
+              <>
+                <div className="animate-spin rounded-full h-5 w-5 border-2 border-white border-t-transparent"></div>
+                Saving...
+              </>
+            ) : saved ? (
+              <>
+                <Check className="h-5 w-5" />
+                Saved!
+              </>
+            ) : (
+              <>
+                <Save className="h-5 w-5" />
+                Save Changes
+              </>
+            )}
+          </button>
         </div>
 
         {/* Right Column - Sticky Preview */}
@@ -344,6 +544,9 @@ export default function BioPage() {
               linkedinUrl={formData.linkedinUrl}
               twitterUrl={formData.twitterUrl}
               youtubeUrl={formData.youtubeUrl}
+              theme={selectedTheme}
+              buttonStyle={selectedButtonStyle}
+              fontStyle={selectedFontStyle}
             />
           </div>
         </div>
@@ -397,6 +600,9 @@ export default function BioPage() {
               linkedinUrl={formData.linkedinUrl}
               twitterUrl={formData.twitterUrl}
               youtubeUrl={formData.youtubeUrl}
+              theme={selectedTheme}
+              buttonStyle={selectedButtonStyle}
+              fontStyle={selectedFontStyle}
             />
           </div>
         </div>

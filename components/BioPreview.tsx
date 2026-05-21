@@ -19,7 +19,83 @@ interface BioPreviewProps {
   linkedinUrl: string;
   twitterUrl: string;
   youtubeUrl: string;
+  theme?: 'warm-ink' | 'pure' | 'forest' | 'ocean' | 'rose' | 'amber' | 'slate' | 'parchment';
+  buttonStyle?: 'pill' | 'rounded' | 'square' | 'sharp';
+  fontStyle?: 'fraunces' | 'dm-sans' | 'georgia' | 'mono';
 }
+
+const themeStyles = {
+  'warm-ink': {
+    bg: 'from-[#1a1a1a] to-[#2d2d2d]',
+    text: 'text-white',
+    subtext: 'text-gray-400',
+    cardBg: 'bg-[#1f1f1f]',
+    border: 'border-gray-700',
+  },
+  'pure': {
+    bg: 'from-white to-gray-50',
+    text: 'text-black',
+    subtext: 'text-gray-600',
+    cardBg: 'bg-white',
+    border: 'border-gray-200',
+  },
+  'forest': {
+    bg: 'from-[#0f2318] to-[#1a3d2b]',
+    text: 'text-white',
+    subtext: 'text-green-200',
+    cardBg: 'bg-[#0f2318]',
+    border: 'border-green-900',
+  },
+  'ocean': {
+    bg: 'from-[#0a1628] to-[#1a2d4d]',
+    text: 'text-white',
+    subtext: 'text-blue-200',
+    cardBg: 'bg-[#0a1628]',
+    border: 'border-blue-900',
+  },
+  'rose': {
+    bg: 'from-[#2d1a1f] to-[#4d2830]',
+    text: 'text-white',
+    subtext: 'text-red-200',
+    cardBg: 'bg-[#2d1a1f]',
+    border: 'border-rose-900',
+  },
+  'amber': {
+    bg: 'from-[#1a1508] to-[#3d2f10]',
+    text: 'text-white',
+    subtext: 'text-amber-200',
+    cardBg: 'bg-[#1a1508]',
+    border: 'border-amber-900',
+  },
+  'slate': {
+    bg: 'from-[#1e293b] to-[#334155]',
+    text: 'text-white',
+    subtext: 'text-slate-300',
+    cardBg: 'bg-[#1e293b]',
+    border: 'border-slate-600',
+  },
+  'parchment': {
+    bg: 'from-[#fef9f0] to-[#f5ebe0]',
+    text: 'text-[#1a1a1a]',
+    subtext: 'text-[#6b5b4f]',
+    cardBg: 'bg-[#fef9f0]',
+    border: 'border-[#d4c4b0]',
+  },
+};
+
+const buttonStyles = {
+  pill: 'rounded-full',
+  rounded: 'rounded-xl',
+  square: 'rounded-lg',
+  sharp: 'rounded-none',
+};
+
+const fontFamilies = {
+  'fraunces': 'font-serif',
+  'dm-sans': 'font-sans',
+  'georgia': 'font-serif',
+  'mono': 'font-mono',
+};
 
 export function BioPreview({
   avatarUrl,
@@ -31,45 +107,44 @@ export function BioPreview({
   linkedinUrl,
   twitterUrl,
   youtubeUrl,
+  theme = 'parchment',
+  buttonStyle = 'pill',
+  fontStyle = 'dm-sans',
 }: BioPreviewProps) {
   const socialLinks = [
     {
       name: 'Facebook',
       url: facebookUrl,
       icon: Facebook,
-      // iconColor: 'text-blue-600',
     },
     {
       name: 'Instagram',
       url: instagramUrl,
       icon: Instagram,
-      // iconColor: 'text-pink-500',
     },
     {
       name: 'LinkedIn',
       url: linkedinUrl,
       icon: Linkedin,
-      // iconColor: 'text-blue-700',
     },
     {
       name: 'Twitter',
       url: twitterUrl,
       icon: Twitter,
-      // iconColor: 'text-black',
     },
     {
       name: 'YouTube',
       url: youtubeUrl,
       icon: Youtube,
-      // iconColor: 'text-red-600',
     },
   ].filter((link) => link.url && link.url.trim() !== '');
+
+  const currentTheme = themeStyles[theme];
 
   return (
     <div className="bg-transparent">
       {/* Preview Header */}
       <div className="flex items-center gap-2 mb-3">
-        {/* <div className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse"></div> */}
         <span className="text-[12px] font-medium text-gray-500 max-w-[150px] mx-auto">
           Live Preview
         </span>
@@ -82,19 +157,19 @@ export function BioPreview({
           style={{ width: '200px' }}
         >
           {/* Screen */}
-          <div className="bg-white rounded-[1.6rem] overflow-hidden relative">
+          <div className={`rounded-[1.6rem] overflow-hidden relative bg-gradient-to-b ${currentTheme.bg}`}>
             {/* Dynamic Island */}
             <div className="absolute top-1.5 left-1/2 -translate-x-1/2 w-14 h-4 bg-black rounded-full z-10"></div>
 
             {/* Content */}
-            <div className="pt-8 px-3 pb-5 min-h-[400px] flex flex-col items-center">
+            <div className={`pt-8 px-3 pb-5 min-h-[400px] flex flex-col items-center ${fontFamilies[fontStyle]}`}>
               {/* Avatar */}
               <div className="mb-3">
                 {avatarUrl ? (
                   <img
                     src={avatarUrl}
                     alt={displayName || username}
-                    className="w-16 h-16 rounded-full object-cover border-2 border-gray-100 shadow-md"
+                    className="w-16 h-16 rounded-full object-cover border-2 border-white/20 shadow-md"
                   />
                 ) : (
                   <div className="w-16 h-16 bg-gradient-to-br from-[#2EE6A6] to-[#1FD695] rounded-full flex items-center justify-center shadow-md">
@@ -104,45 +179,22 @@ export function BioPreview({
               </div>
 
               {/* Name */}
-              <h2 className="text-gray-900 font-bold text-[13px] text-center leading-tight">
+              <h2 className={`${currentTheme.text} font-bold text-[13px] text-center leading-tight`}>
                 {displayName || 'Your Name'}
               </h2>
 
               {/* Username */}
-              <p className="text-gray-400 text-[9px] text-center mt-1">
+              <p className={`${currentTheme.subtext} text-[9px] text-center mt-1`}>
                 @{username || 'username'}
               </p>
 
-              {/* Social Icons
-              {socialLinks.length > 0 && (
-                <div className="flex items-center justify-center gap-2 mt-2">
-                  {socialLinks.map((link, index) => {
-                    const Icon = link.icon;
-
-                    return (
-                      <a
-                        key={index}
-                        href={link.url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="w-5 h-5 rounded-xl border border-gray-200 bg-white flex items-center justify-center shadow-sm hover:scale-105 transition-all duration-200"
-                      >
-                        <Icon
-                          size={12}
-                          // className={link}
-                        />
-                      </a>
-                    );
-                  })}
-                </div>
-              )} */}
-
-              {/* Bio */}
+               {/* Bio */}
               {bio && (
-                <p className="text-gray-500 text-[9px] text-center max-w-[150px] mx-auto mt-2 leading-relaxed">
+                <p className={`${currentTheme.subtext} text-[9px] text-center max-w-[150px] mx-auto mt-2 leading-relaxed`}>
                   {bio}
                 </p>
               )}
+
 
               {/* Social Icons */}
               {socialLinks.length > 0 && (
@@ -156,11 +208,11 @@ export function BioPreview({
                         href={link.url}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="w-5 h-5 rounded-xl border border-gray-200 bg-white flex items-center justify-center shadow-sm hover:scale-105 transition-all duration-200"
+                        className={`w-6 h-6 ${currentTheme.cardBg} border ${currentTheme.border} flex items-center rounded-full justify-center shadow-sm hover:scale-105 transition-all duration-200`}
                       >
                         <Icon
-                          size={12}
-                          // className={link}
+                          size={11}
+                          className={currentTheme.text}
                         />
                       </a>
                     );
@@ -168,11 +220,33 @@ export function BioPreview({
                 </div>
               )}
 
+             
+              {/* Sample Link Button */}
+              {socialLinks.length === 0 && (
+                <div className={`mt-4 ${currentTheme.cardBg} border ${currentTheme.border} ${buttonStyles[buttonStyle]} px-4 py-2`}>
+                  <p className={`${currentTheme.text} text-[9px] font-medium`}>Your Link</p>
+                </div>
+              )}
 
+              {/* Sample Link Buttons */}
+              {socialLinks.length > 0 && (
+                <div className="mt-3 space-y-2 w-full">
+                  {[1, 2].slice(0, Math.min(socialLinks.length, 2)).map((_, idx) => (
+                    <div
+                      key={idx}
+                      className={`${currentTheme.cardBg} border ${currentTheme.border} ${buttonStyles[buttonStyle]} px-4 py-2.5`}
+                    >
+                      <p className={`${currentTheme.text} text-[9px] font-medium text-center`}>
+                        Sample Link {idx + 1}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
 
             {/* Home Bar */}
-            <div className="absolute bottom-1 left-1/2 -translate-x-1/2 w-16 h-1 bg-gray-300 rounded-full"></div>
+            <div className="absolute bottom-1 left-1/2 -translate-x-1/2 w-16 h-1 bg-white/30 rounded-full"></div>
           </div>
         </div>
       </div>

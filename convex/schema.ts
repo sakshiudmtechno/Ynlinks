@@ -12,6 +12,8 @@ export default defineSchema({
     phone: v.optional(v.string()),
     niche: v.optional(v.string()),
     theme: v.optional(v.string()),
+    buttonStyle: v.optional(v.string()),
+    fontStyle: v.optional(v.string()),
     isAdmin: v.boolean(),
     earnings: v.number(),
     socialPlatform: v.optional(v.string()),

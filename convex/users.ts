@@ -84,6 +84,9 @@ export const updateUserProfile = mutation({
     linkedinUrl: v.optional(v.string()),
     twitterUrl: v.optional(v.string()),
     youtubeUrl: v.optional(v.string()),
+    theme: v.optional(v.string()),
+    buttonStyle: v.optional(v.string()),
+    fontStyle: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
     const { userId, ...updates } = args;
