@@ -1,11 +1,12 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { useUser } from '@clerk/nextjs';
 import { useQuery, useMutation } from 'convex/react';
 import { api } from '@/convex/_generated/api';
 import { Id } from '@/convex/_generated/dataModel';
-import { Plus, X, GripVertical, Edit, Eye, EyeOff, Trash2, BarChart3, Image as ImageIcon, AlertCircle } from 'lucide-react';
+import { Plus, X, GripVertical, Edit, Eye, EyeOff, Trash2, BarChart3, Image as ImageIcon, Link2, Search, Pin, Copy, ChevronDown, Share2, ExternalLink } from 'lucide-react';
+import { BioPreview } from '@/components/BioPreview';
 
 interface Link {
   _id: string;
@@ -17,6 +18,7 @@ interface Link {
   clicks: number;
   orderIndex: number;
   userId: string;
+  type?: string;
 }
 
 export default function LinksPage() {
@@ -26,12 +28,14 @@ export default function LinksPage() {
   const [loading, setLoading] = useState(false);
   const [draggedItem, setDraggedItem] = useState<string | null>(null);
   const [dragOverItem, setDragOverItem] = useState<string | null>(null);
+  const [searchQuery, setSearchQuery] = useState('');
   const [formData, setFormData] = useState({
     title: '',
     url: '',
     description: '',
     thumbnailUrl: '',
     enabled: true,
+    type: '',
   });
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
 
@@ -45,10 +49,16 @@ export default function LinksPage() {
   const reorderLinksMutation = useMutation(api.links.reorderLinks);
 
   const links = linksData || [];
+  const filteredLinks = links.filter(link =>
+    link.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    link.url.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
+  const activeLinks = filteredLinks.filter(l => l.enabled).sort((a, b) => a.orderIndex - b.orderIndex);
 
   const handleOpenModal = (link?: Link) => {
     if (!link && links.length >= 5) {
-      alert('Maximum 5 links allowed. Please delete an existing link before creating a new one.');
+      alert('Maximum 5 links allowed.');
       return;
     }
 
@@ -60,10 +70,11 @@ export default function LinksPage() {
         description: link.description || '',
         thumbnailUrl: link.thumbnailUrl || '',
         enabled: link.enabled,
+        type: link.type || '',
       });
     } else {
       setEditingLink(null);
-      setFormData({ title: '', url: '', description: '', thumbnailUrl: '', enabled: true });
+      setFormData({ title: '', url: '', description: '', thumbnailUrl: '', enabled: true, type: '' });
     }
     setErrors({});
     setShowModal(true);
@@ -72,42 +83,26 @@ export default function LinksPage() {
   const handleCloseModal = () => {
     setShowModal(false);
     setEditingLink(null);
-    setFormData({ title: '', url: '', description: '', thumbnailUrl: '', enabled: true });
+    setFormData({ title: '', url: '', description: '', thumbnailUrl: '', enabled: true, type: '' });
     setErrors({});
   };
 
   const validateForm = () => {
     const newErrors: { [key: string]: string } = {};
-
-    if (!formData.title.trim()) {
-      newErrors.title = 'Title is required';
-    }
-
+    if (!formData.title.trim()) newErrors.title = 'Title is required';
     if (!formData.url.trim()) {
       newErrors.url = 'URL is required';
     } else {
-      try {
-        new URL(formData.url);
-      } catch {
-        newErrors.url = 'Please enter a valid URL (including https://)';
-      }
+      try { new URL(formData.url); } catch { newErrors.url = 'Please enter a valid URL'; }
     }
-
-    if (formData.description && formData.description.length > 100) {
-      newErrors.description = 'Description must be 100 characters or less';
-    }
-
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-
     if (!validateForm() || !profile) return;
-
     setLoading(true);
-
     try {
       if (editingLink) {
         await updateLinkMutation({
@@ -128,7 +123,6 @@ export default function LinksPage() {
           enabled: formData.enabled,
         });
       }
-
       handleCloseModal();
     } catch (error: any) {
       alert(error.message || 'Failed to save link');
@@ -139,10 +133,7 @@ export default function LinksPage() {
 
   const handleToggle = async (linkId: string, currentEnabled: boolean) => {
     try {
-      await toggleLinkMutation({
-        linkId: linkId as any,
-        enabled: !currentEnabled,
-      });
+      await toggleLinkMutation({ linkId: linkId as any, enabled: !currentEnabled });
     } catch (error: any) {
       alert(error.message);
     }
@@ -150,7 +141,6 @@ export default function LinksPage() {
 
   const handleDelete = async (linkId: string) => {
     if (!confirm('Are you sure you want to delete this link?')) return;
-
     try {
       await deleteLinkMutation({ linkId: linkId as any });
     } catch (error: any) {
@@ -166,13 +156,7 @@ export default function LinksPage() {
   const handleDragOver = (e: React.DragEvent, id: string) => {
     e.preventDefault();
     e.dataTransfer.dropEffect = 'move';
-    if (id !== dragOverItem) {
-      setDragOverItem(id);
-    }
-  };
-
-  const handleDragLeave = () => {
-    // Optional: add visual feedback
+    if (id !== dragOverItem) setDragOverItem(id);
   };
 
   const handleDrop = async (e: React.DragEvent, targetId: string) => {
@@ -182,37 +166,30 @@ export default function LinksPage() {
       setDragOverItem(null);
       return;
     }
-
     const currentLinks = [...links].sort((a, b) => a.orderIndex - b.orderIndex);
     const draggedIndex = currentLinks.findIndex((l) => l._id === draggedItem);
     const targetIndex = currentLinks.findIndex((l) => l._id === targetId);
-
     if (draggedIndex === -1 || targetIndex === -1) return;
-
     const newOrder = [...currentLinks];
     const [removed] = newOrder.splice(draggedIndex, 1);
     newOrder.splice(targetIndex, 0, removed);
-
     try {
-      await reorderLinksMutation({
-        userId: profile?._id || '',
-        linkIds: newOrder.map((l) => l._id as any),
-      });
+      await reorderLinksMutation({ userId: profile?._id || '', linkIds: newOrder.map((l) => l._id as any) });
     } catch (error) {
       console.error('Failed to reorder links:', error);
     }
-
     setDraggedItem(null);
     setDragOverItem(null);
   };
 
-  const handleDragEnd = () => {
-    setDraggedItem(null);
-    setDragOverItem(null);
+  const copyLink = (url: string) => {
+    navigator.clipboard.writeText(url);
   };
 
-  const activeLinks = links.filter((l) => l.enabled).sort((a, b) => a.orderIndex - b.orderIndex);
-  const archivedLinks = links.filter((l) => !l.enabled).sort((a, b) => a.orderIndex - b.orderIndex);
+  const copyBioLink = () => {
+    const bioLink = `${typeof window !== 'undefined' ? window.location.origin : ''}/u/${profile?.username}`;
+    navigator.clipboard.writeText(bioLink);
+  };
 
   if (!isLoaded) {
     return (
@@ -223,276 +200,263 @@ export default function LinksPage() {
   }
 
   return (
-    <div className="max-w-3xl mx-auto">
-      {/* Profile Header */}
-      <div className="bg-white rounded-2xl border border-gray-200 p-6 mb-6 flex items-center gap-4">
-        {profile?.avatarUrl ? (
-          <img
-            src={profile.avatarUrl}
-            alt={profile.displayName || profile.username}
-            className="w-16 h-16 rounded-full object-cover border-2 border-[#2EE6A6] shadow-sm"
-          />
-        ) : (
-          <div className="w-16 h-16 bg-gradient-to-br from-[#2EE6A6] to-[#2EE6A6]/70 rounded-full flex items-center justify-center text-white text-2xl font-bold">
-            {profile?.displayName?.charAt(0)?.toUpperCase()}
+    <div className="min-h-screen bg-[#FAF8F5]">
+      <div className="max-w-6xl mx-auto ">
+        {/* Header */}
+        <div className="flex items-center justify-between mb-6">
+          <div>
+            <h1 className="text-3xl font-serif font-bold text-[#111111]">Links</h1>
+            <p className="text-sm text-[#6B7280] mt-0.5">Manage and organize your public links</p>
           </div>
-        )}
-        <div className="flex-1">
-          <h2 className="text-xl font-bold text-[#111111]">@{profile?.username}</h2>
+          <div className="flex items-center gap-4">
+            <span className="text-sm font-medium text-[#6B7280]">{links.filter(l => l.enabled).length} links</span>
+            <button
+              onClick={() => handleOpenModal()}
+              disabled={links.length >= 5}
+              className={`px-4 py-2 rounded-full font-semibold text-sm flex items-center gap-2 transition-all ${
+                links.length >= 5
+                  ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                  : 'bg-[#111111] text-white hover:bg-black'
+              }`}
+            >
+              <Plus size={16} />
+              Add Link
+            </button>
+          </div>
+        </div>
+
+        {/* 2-Column Layout */}
+        <div className="grid grid-cols-1 xl:grid-cols-[1fr_320px] gap-6">
+          {/* Left Column - Links List */}
+          <div className="space-y-5">
+            {/* Search & Filters */}
+            <div className="flex items-center gap-3">
+              <div className="flex-1 relative max-w-sm">
+                <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                <input
+                  type="text"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  placeholder="Search links..."
+                  className="w-full bg-white border border-gray-200 rounded-xl pl-10 pr-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#2EE6A6] focus:border-transparent"
+                />
+              </div>
+              <button className="px-3 py-2.5 bg-white border border-gray-200 rounded-xl text-sm font-medium text-[#111111] hover:border-gray-300 transition-colors flex items-center gap-1.5">
+                Order: Custom
+                <ChevronDown size={14} />
+              </button>
+              <button className="p-2.5 bg-white border border-gray-200 rounded-xl hover:border-gray-300 transition-colors">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <line x1="3" y1="6" x2="21" y2="6" />
+                  <line x1="3" y1="12" x2="21" y2="12" />
+                  <line x1="3" y1="18" x2="21" y2="18" />
+                </svg>
+              </button>
+            </div>
+
+            {/* Links Sections */}
+            <div className="space-y-6">
+              {/* ALL LINKS Section */}
+              {activeLinks.length > 0 && (
+                <div>
+                  <div className="flex items-center gap-3 mb-3">
+                    <span className="px-3 py-1 bg-[#F5F0E8] text-[#6B7280] text-xs font-semibold rounded-full">
+                      ALL LINKS
+                    </span>
+                  </div>
+                  <div className="space-y-2">
+                    {activeLinks.map((link) => (
+                      <LinkCard
+                        key={link._id}
+                        link={link}
+                        onEdit={handleOpenModal}
+                        onToggle={handleToggle}
+                        onDelete={handleDelete}
+                        onCopy={copyLink}
+                        onDragStart={handleDragStart}
+                        onDragOver={handleDragOver}
+                        onDrop={handleDrop}
+                        draggedItem={draggedItem}
+                        dragOverItem={dragOverItem}
+                      />
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Empty State */}
+              {links.length === 0 && (
+                <div className="bg-white rounded-2xl border-2 border-dashed border-gray-300 p-16 text-center">
+                  <div className="w-16 h-16 bg-[#2EE6A6]/10 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                    <Link2 className="text-[#2EE6A6]" size={32} />
+                  </div>
+                  <h3 className="text-xl font-serif font-bold text-[#111111] mb-2">No links yet</h3>
+                  <p className="text-[#6B7280] mb-6 max-w-md mx-auto">
+                    Add your first link to start building your bio page!
+                  </p>
+                  <button
+                    onClick={() => handleOpenModal()}
+                    className="bg-[#111111] text-white px-8 py-3 rounded-full hover:bg-black transition-all inline-flex items-center gap-2 font-semibold"
+                  >
+                    <Plus size={20} />
+                    Add Your First Link
+                  </button>
+                </div>
+              )}
+
+              {/* Add Link Button */}
+              {links.length > 0 && links.length < 5 && (
+                <button
+                  onClick={() => handleOpenModal()}
+                  className="w-full py-8 border-2 border-dashed border-gray-300 rounded-2xl text-gray-400 hover:border-gray-400 hover:text-gray-500 transition-all flex items-center justify-center gap-2"
+                >
+                  <Plus size={20} />
+                  Add another link
+                </button>
+              )}
+            </div>
+          </div>
+
+          {/* Right Column - Live Preview */}
+          <div className="hidden xl:block">
+            <div className="sticky top-4">
+              <div className="bg-white rounded-xl border border-gray-200 p-3 shadow-sm">
+                <div className="flex items-center gap-2 mb-3">
+                  <div className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse"></div>
+                  <span className="text-xs font-medium text-[#6B7280]">Live Preview</span>
+                </div>
+                <BioPreview
+                  avatarUrl={profile?.avatarUrl || ''}
+                  displayName={profile?.displayName || profile?.username || ''}
+                  username={profile?.username || ''}
+                  bio={profile?.bio || ''}
+                  facebookUrl={profile?.facebookUrl || ''}
+                  instagramUrl={profile?.instagramUrl || ''}
+                  linkedinUrl={profile?.linkedinUrl || ''}
+                  twitterUrl={profile?.twitterUrl || ''}
+                  youtubeUrl={profile?.youtubeUrl || ''}
+                  userLinks={links}
+                  theme={(profile?.theme as any) || 'parchment'}
+                  buttonStyle={(profile?.buttonStyle as any) || 'pill'}
+                  fontStyle={(profile?.fontStyle as any) || 'dm-sans'}
+                />
+                <div className="flex gap-2 mt-3">
+                  <button className="flex-1 py-2 bg-white border border-gray-200 rounded-lg text-xs font-medium text-[#111111] hover:bg-gray-50 transition-colors flex items-center justify-center gap-1.5">
+                    <Share2 size={13} />
+                    Share
+                  </button>
+                  <button onClick={copyBioLink} className="flex-1 py-2 bg-[#111111] text-white rounded-lg text-xs font-medium hover:bg-black transition-colors flex items-center justify-center gap-1.5">
+                    <ExternalLink size={13} />
+                    Copy Link
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
 
-      {/* Add Button */}
-      <button
-        onClick={() => handleOpenModal()}
-        disabled={links.length >= 5}
-        className={`w-full py-4 rounded-full font-semibold text-lg mb-6 transition-all flex items-center justify-center gap-2 ${
-          links.length >= 5
-            ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
-            : 'bg-[#2EE6A6] text-white hover:bg-[#1FD695] shadow-lg shadow-[#2EE6A6]/20'
-        }`}
-        title={links.length >= 5 ? 'Maximum 5 links reached' : 'Add new link'}
-      >
-        <Plus size={24} />
-        {links.length >= 5 ? 'Maximum Links Reached (5/5)' : 'Add New Link'}
-      </button>
+      {/* Mobile Preview Toggle */}
+      <div className="xl:hidden fixed bottom-6 right-6 z-50">
+        <button
+          onClick={() => {
+            const preview = document.getElementById('mobile-links-preview');
+            if (preview) preview.classList.toggle('hidden');
+          }}
+          className="w-14 h-14 bg-[#2EE6A6] text-white rounded-full shadow-lg flex items-center justify-center hover:bg-[#1FD695] transition-all"
+          title="Toggle Preview"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z" />
+          </svg>
+        </button>
+      </div>
 
-      {/* Links List */}
-      <div className="space-y-3">
-        {links.length === 0 ? (
-          <div className="bg-white rounded-2xl border-2 border-dashed border-gray-300 p-16 text-center">
-            <div className="w-16 h-16 bg-[#2EE6A6]/10 rounded-2xl flex items-center justify-center mx-auto mb-4">
-              <Plus className="text-[#2EE6A6]" size={32} />
-            </div>
-            <h3 className="text-xl font-display font-bold text-[#111111] mb-2">No links yet</h3>
-            <p className="text-[#6B7280] mb-6 max-w-md mx-auto">
-              Add your first link to start building your earning bio page!
-            </p>
+      {/* Mobile Preview Panel */}
+      <div id="mobile-links-preview" className="xl:hidden fixed inset-0 z-40 bg-black/50 hidden">
+        <div className="absolute bottom-0 left-0 right-0 max-h-[85vh] bg-gray-50 rounded-t-3xl overflow-y-auto">
+          <div className="sticky top-0 bg-gray-50 p-4 border-b border-gray-200 flex items-center justify-between">
+            <h3 className="font-semibold text-[#111111]">Live Preview</h3>
             <button
-              onClick={() => handleOpenModal()}
-              className="bg-[#2EE6A6] text-white px-8 py-3 rounded-xl hover:bg-[#1FD695] transition-all inline-flex items-center gap-2 font-semibold shadow-lg"
+              onClick={() => {
+                const preview = document.getElementById('mobile-links-preview');
+                if (preview) preview.classList.add('hidden');
+              }}
+              className="w-8 h-8 bg-gray-200 rounded-full flex items-center justify-center text-gray-600 hover:bg-gray-300 transition-colors"
             >
-              <Plus size={20} />
-              Add Your First Link
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+              </svg>
             </button>
           </div>
-        ) : (
-          <>
-            {activeLinks.map((link) => (
-              <div
-                key={link._id}
-                draggable
-                onDragStart={(e) => handleDragStart(e, link._id)}
-                onDragOver={(e) => handleDragOver(e, link._id)}
-                onDragLeave={handleDragLeave}
-                onDrop={(e) => handleDrop(e, link._id)}
-                onDragEnd={handleDragEnd}
-                className={`bg-white rounded-2xl border transition-all hover:shadow-md ${
-                  draggedItem === link._id
-                    ? 'opacity-50 border-[#2EE6A6]'
-                    : dragOverItem === link._id
-                    ? 'border-[#2EE6A6] border-2'
-                    : 'border-gray-200'
-                }`}
-              >
-                <div className="flex overflow-hidden">
-                  <div className="flex items-center justify-center px-4 cursor-grab active:cursor-grabbing hover:bg-gray-50 transition-colors">
-                    <GripVertical size={20} className="text-gray-400" />
-                  </div>
-
-                  <div className="flex-1 py-5 pr-5 min-w-0">
-                    <div className="mb-4">
-                      <div className="flex items-center gap-2 mb-1">
-                        <span className="font-semibold text-[#111111] text-sm">{link.title}</span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <span className="text-xs text-gray-500 truncate max-w-full block">{link.url}</span>
-                      </div>
-                    </div>
-
-                    <div className="flex items-center justify-between flex-wrap gap-2">
-                      <div className="flex items-center gap-3 text-gray-500">
-                        <div className="flex items-center gap-1 text-xs">
-                          <BarChart3 size={16} />
-                          <span>{link.clicks || 0} clicks</span>
-                        </div>
-                      </div>
-
-                      <div className="flex items-center gap-3 flex-shrink-0">
-                        <button
-                          onClick={() => handleOpenModal(link)}
-                          className="text-gray-500 hover:text-[#2EE6A6] transition-colors"
-                          title="Edit"
-                        >
-                          <Edit size={18} />
-                        </button>
-
-                        <button
-                          onClick={() => handleToggle(link._id, link.enabled)}
-                          className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                            link.enabled ? 'bg-[#2EE6A6]' : 'bg-gray-300'
-                          }`}
-                          title={link.enabled ? 'Active' : 'Inactive'}
-                        >
-                          <span
-                            className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-                              link.enabled ? 'translate-x-6' : 'translate-x-1'
-                            }`}
-                          />
-                        </button>
-
-                        <button
-                          onClick={() => handleDelete(link._id)}
-                          className="text-gray-500 hover:text-red-500 transition-colors"
-                          title="Delete"
-                        >
-                          <Trash2 size={18} />
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-
-                  {link.thumbnailUrl && (
-                    <div className="w-20 h-20 my-5 mr-5 rounded-xl overflow-hidden bg-gray-100 flex-shrink-0">
-                      <img src={link.thumbnailUrl} alt={link.title} className="w-full h-full object-cover" />
-                    </div>
-                  )}
-                </div>
-              </div>
-            ))}
-
-            {archivedLinks.length > 0 && (
-              <div className="mt-8">
-                <div className="flex items-center gap-2 mb-4">
-                  <EyeOff size={18} className="text-[#6B7280]" />
-                  <h2 className="text-lg font-display font-bold text-[#111111]">
-                    Archived Links ({archivedLinks.length})
-                  </h2>
-                </div>
-                <div className="space-y-3">
-                  {archivedLinks.map((link) => (
-                    <div
-                      key={link._id}
-                      className="bg-gray-50 rounded-2xl border border-gray-200 flex overflow-hidden opacity-60"
-                    >
-                      <div className="flex items-center justify-center px-4">
-                        <GripVertical size={20} className="text-gray-400" />
-                      </div>
-                      <div className="flex-1 py-5">
-                        <div className="mb-4">
-                          <div className="flex items-center gap-2 mb-1">
-                            <span className="font-semibold text-[#111111] text-sm">{link.title}</span>
-                          </div>
-                          <div className="flex items-center gap-2">
-                            <span className="text-xs text-gray-500 truncate">{link.url}</span>
-                          </div>
-                        </div>
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-3 text-gray-500">
-                            <div className="flex items-center gap-1 text-xs">
-                              <BarChart3 size={16} />
-                              <span>{link.clicks || 0} clicks</span>
-                            </div>
-                          </div>
-                          <div className="flex items-center gap-3 flex-shrink-0">
-                            <button onClick={() => handleOpenModal(link)} className="text-gray-500 hover:text-[#2EE6A6] transition-colors">
-                              <Edit size={18} />
-                            </button>
-                            <button
-                              onClick={() => handleToggle(link._id, link.enabled)}
-                              className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                                link.enabled ? 'bg-[#2EE6A6]' : 'bg-gray-300'
-                              }`}
-                            >
-                              <span
-                                className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-                                  link.enabled ? 'translate-x-6' : 'translate-x-1'
-                                }`}
-                              />
-                            </button>
-                            <button onClick={() => handleDelete(link._id)} className="text-gray-500 hover:text-red-500">
-                              <Trash2 size={18} />
-                            </button>
-                          </div>
-                        </div>
-                      </div>
-                      {link.thumbnailUrl && (
-                        <div className="w-20 h-20 my-5 mr-5 rounded-xl overflow-hidden bg-gray-100 flex-shrink-0">
-                          <img src={link.thumbnailUrl} alt={link.title} className="w-full h-full object-cover" />
-                        </div>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-          </>
-        )}
+          <div className="p-4">
+            <BioPreview
+              avatarUrl={profile?.avatarUrl || ''}
+              displayName={profile?.displayName || profile?.username || ''}
+              username={profile?.username || ''}
+              bio={profile?.bio || ''}
+              facebookUrl={profile?.facebookUrl || ''}
+              instagramUrl={profile?.instagramUrl || ''}
+              linkedinUrl={profile?.linkedinUrl || ''}
+              twitterUrl={profile?.twitterUrl || ''}
+              youtubeUrl={profile?.youtubeUrl || ''}
+              userLinks={links}
+              theme={(profile?.theme as any) || 'parchment'}
+              buttonStyle={(profile?.buttonStyle as any) || 'pill'}
+              fontStyle={(profile?.fontStyle as any) || 'dm-sans'}
+            />
+          </div>
+        </div>
       </div>
 
       {/* Add/Edit Modal */}
       {showModal && (
-        <div className="fixed inset-0 bg-[#111111]/50 z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-            <div className="sticky top-0 bg-white border-b border-gray-200 px-8 py-6 flex items-center justify-between">
-              <h2 className="text-2xl font-display font-bold text-[#111111]">
+        <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4">
+          <div className="bg-[#FAF8F5] rounded-3xl shadow-2xl max-w-lg w-full">
+            <div className="px-8 py-6 border-b border-gray-200 flex items-center justify-between">
+              <h2 className="text-2xl font-serif font-bold text-[#111111]">
                 {editingLink ? 'Edit Link' : 'Add New Link'}
               </h2>
-              <button onClick={handleCloseModal} className="p-2 hover:bg-gray-100 rounded-lg transition-colors">
-                <X size={24} className="text-[#6B7280]" />
+              <button onClick={handleCloseModal} className="p-2 hover:bg-gray-200 rounded-xl transition-colors">
+                <X size={22} className="text-gray-500" />
               </button>
             </div>
 
             <form onSubmit={handleSubmit} className="p-8">
               <div className="space-y-6">
                 <div>
-                  <label className="block text-sm font-semibold text-[#111111] mb-2">
-                    Link Title *
-                  </label>
+                  <label className="block text-sm font-semibold text-[#111111] mb-2">Title *</label>
                   <input
                     type="text"
                     value={formData.title}
                     onChange={(e) => setFormData({ ...formData, title: e.target.value })}
                     placeholder="e.g., My YouTube Channel"
-                    className={`w-full border-2 ${errors.title ? 'border-red-300' : 'border-gray-200'} rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-[#2EE6A6] focus:border-transparent transition-all`}
+                    className={`w-full border-2 ${errors.title ? 'border-red-300' : 'border-gray-200'} rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-[#2EE6A6] bg-white`}
                   />
-                  {errors.title && (
-                    <p className="text-xs text-red-600 mt-1 flex items-center gap-1">
-                      <AlertCircle size={12} /> {errors.title}
-                    </p>
-                  )}
+                  {errors.title && <p className="text-xs text-red-500 mt-1">{errors.title}</p>}
                 </div>
 
                 <div>
-                  <label className="block text-sm font-semibold text-[#111111] mb-2">
-                    Destination URL *
-                  </label>
+                  <label className="block text-sm font-semibold text-[#111111] mb-2">URL *</label>
                   <input
                     type="url"
                     value={formData.url}
                     onChange={(e) => setFormData({ ...formData, url: e.target.value })}
                     placeholder="https://example.com"
-                    className={`w-full border-2 ${errors.url ? 'border-red-300' : 'border-gray-200'} rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-[#2EE6A6] focus:border-transparent transition-all`}
+                    className={`w-full border-2 ${errors.url ? 'border-red-300' : 'border-gray-200'} rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-[#2EE6A6] bg-white`}
                   />
-                  {errors.url && (
-                    <p className="text-xs text-red-600 mt-1 flex items-center gap-1">
-                      <AlertCircle size={12} /> {errors.url}
-                    </p>
-                  )}
+                  {errors.url && <p className="text-xs text-red-500 mt-1">{errors.url}</p>}
                 </div>
 
                 <div>
-                  <label className="block text-sm font-semibold text-[#111111] mb-3">
-                    Thumbnail Image <span className="text-[#6B7280] font-normal">(Optional)</span>
-                  </label>
-                  <div className="flex flex-col items-center">
+                  <label className="block text-sm font-semibold text-[#111111] mb-2">Thumbnail (Optional)</label>
+                  <div className="flex items-center gap-4">
                     <input
                       type="file"
                       accept="image/*"
                       onChange={(e) => {
                         const file = e.target.files?.[0];
-                        if (!file) return;
-                        if (file.size > 2 * 1024 * 1024) {
+                        if (!file || file.size > 2 * 1024 * 1024) {
                           alert('Image size should be less than 2MB');
                           return;
                         }
@@ -505,53 +469,36 @@ export default function LinksPage() {
                       className="hidden"
                       id="thumbnail-upload"
                     />
-                    <label htmlFor="thumbnail-upload" className="cursor-pointer group relative">
+                    <label htmlFor="thumbnail-upload" className="cursor-pointer">
                       {formData.thumbnailUrl ? (
-                        <div className="relative">
-                          <div className="w-32 h-32 rounded-xl border-2 border-[#2EE6A6] overflow-hidden bg-gray-50 group-hover:opacity-75 transition-opacity">
-                            <img src={formData.thumbnailUrl} alt="Thumbnail preview" className="w-full h-full object-cover" />
-                          </div>
-                          <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                            <div className="bg-black/60 rounded-full p-3">
-                              <ImageIcon className="h-6 w-6 text-white" />
-                            </div>
-                          </div>
+                        <div className="w-20 h-20 rounded-xl border-2 border-[#2EE6A6] overflow-hidden bg-white">
+                          <img src={formData.thumbnailUrl} alt="" className="w-full h-full object-cover" />
                         </div>
                       ) : (
-                        <div className="w-32 h-32 bg-gradient-to-br from-gray-100 to-gray-50 rounded-xl border-2 border-dashed border-gray-300 flex items-center justify-center group-hover:border-[#2EE6A6] transition-colors">
-                          <ImageIcon className="h-12 w-12 text-gray-400 group-hover:text-[#2EE6A6] transition-colors" />
+                        <div className="w-20 h-20 bg-white rounded-xl border-2 border-dashed border-gray-300 flex items-center justify-center hover:border-[#2EE6A6] transition-colors">
+                          <ImageIcon size={28} className="text-gray-400" />
                         </div>
                       )}
                     </label>
-                    <p className="mt-3 text-sm text-[#6B7280] text-center">Click to upload thumbnail<br/>Max 2MB</p>
+                    <span className="text-xs text-[#6B7280]">Max 2MB</span>
                   </div>
                 </div>
 
-                <div className="bg-[#FFFDF9] border-2 border-gray-200 rounded-xl p-5">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <Eye className="text-[#111111]" size={20} />
-                      <div>
-                        <h4 className="font-semibold text-[#111111]">Link Visibility</h4>
-                        <p className="text-sm text-[#6B7280]">
-                          {formData.enabled ? 'Link is visible on your bio page' : 'Link is hidden from bio page'}
-                        </p>
-                      </div>
-                    </div>
-                    <button
-                      type="button"
-                      onClick={() => setFormData({ ...formData, enabled: !formData.enabled })}
-                      className={`relative inline-flex h-7 w-12 items-center rounded-full transition-colors ${
-                        formData.enabled ? 'bg-[#2EE6A6]' : 'bg-gray-300'
+                <div className="flex items-center justify-between py-4 border-y border-gray-200">
+                  <span className="text-sm font-semibold text-[#111111]">Show on bio page</span>
+                  <button
+                    type="button"
+                    onClick={() => setFormData({ ...formData, enabled: !formData.enabled })}
+                    className={`relative inline-flex h-8 w-14 items-center rounded-full transition-colors ${
+                      formData.enabled ? 'bg-[#111111]' : 'bg-gray-300'
+                    }`}
+                  >
+                    <span
+                      className={`inline-block h-6 w-6 transform rounded-full bg-white shadow-lg transition-transform ${
+                        formData.enabled ? 'translate-x-7' : 'translate-x-1'
                       }`}
-                    >
-                      <span
-                        className={`inline-block h-5 w-5 transform rounded-full bg-white transition-transform ${
-                          formData.enabled ? 'translate-x-6' : 'translate-x-1'
-                        }`}
-                      />
-                    </button>
-                  </div>
+                    />
+                  </button>
                 </div>
               </div>
 
@@ -559,14 +506,14 @@ export default function LinksPage() {
                 <button
                   type="button"
                   onClick={handleCloseModal}
-                  className="flex-1 bg-gray-100 text-[#111111] px-6 py-3 rounded-xl hover:bg-gray-200 transition-all font-semibold"
+                  className="flex-1 bg-gray-200 text-[#111111] px-6 py-3.5 rounded-xl hover:bg-gray-300 transition-all font-semibold"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={loading}
-                  className="flex-1 bg-[#2EE6A6] text-white px-6 py-3 rounded-xl hover:bg-[#1FD695] transition-all font-semibold shadow-lg disabled:opacity-50"
+                  className="flex-1 bg-[#111111] text-white px-6 py-3.5 rounded-xl hover:bg-black transition-all font-semibold shadow-lg disabled:opacity-50"
                 >
                   {loading ? 'Saving...' : editingLink ? 'Update Link' : 'Add Link'}
                 </button>
@@ -575,6 +522,124 @@ export default function LinksPage() {
           </div>
         </div>
       )}
+    </div>
+  );
+}
+
+// Link Card Component
+function LinkCard({
+  link,
+  onEdit,
+  onToggle,
+  onDelete,
+  onCopy,
+  onDragStart,
+  onDragOver,
+  onDrop,
+  draggedItem,
+  dragOverItem,
+}: {
+  link: Link;
+  onEdit: (link: Link) => void;
+  onToggle: (id: string, enabled: boolean) => void;
+  onDelete: (id: string) => void;
+  onCopy: (url: string) => void;
+  onDragStart: (e: React.DragEvent, id: string) => void;
+  onDragOver: (e: React.DragEvent, id: string) => void;
+  onDrop: (e: React.DragEvent, id: string) => void;
+  draggedItem: string | null;
+  dragOverItem: string | null;
+}) {
+  const getBadgeColor = (type: string) => {
+    switch (type?.toLowerCase()) {
+      case 'new': return 'bg-green-100 text-green-700';
+      case 'hot': return 'bg-pink-100 text-pink-600';
+      case 'featured': return 'bg-gray-200 text-gray-600';
+      case 'paid': return 'bg-orange-100 text-orange-600';
+      default: return 'bg-gray-100 text-gray-600';
+    }
+  };
+
+  return (
+    <div
+      draggable
+      onDragStart={(e) => onDragStart(e, link._id)}
+      onDragOver={(e) => onDragOver(e, link._id)}
+      onDrop={(e) => onDrop(e, link._id)}
+      className={`bg-white rounded-xl border transition-all ${
+        draggedItem === link._id ? 'opacity-50 border-[#2EE6A6]' :
+        dragOverItem === link._id ? 'border-[#2EE6A6]' :
+        'border-gray-200 hover:border-gray-300'
+      }`}
+    >
+      <div className="flex items-center gap-3 p-3">
+        {/* Drag Handle */}
+        <div className="cursor-grab active:cursor-grabbing text-gray-400 hover:text-gray-600 flex-shrink-0">
+          <GripVertical size={16} />
+        </div>
+
+        {/* Thumbnail */}
+        {link.thumbnailUrl ? (
+          <div className="w-11 h-11 rounded-lg overflow-hidden bg-gray-100 flex-shrink-0">
+            <img src={link.thumbnailUrl} alt="" className="w-full h-full object-cover" />
+          </div>
+        ) : (
+          <div className="w-11 h-11 rounded-lg bg-[#2EE6A6]/10 flex items-center justify-center flex-shrink-0">
+            <Link2 size={18} className="text-[#2EE6A6]" />
+          </div>
+        )}
+
+        {/* Link Info */}
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-1.5 flex-wrap">
+            <h3 className="font-serif font-medium text-[#111111] text-sm">{link.title}</h3>
+            {link.type && (
+              <span className={`px-1.5 py-0.5 text-[9px] font-semibold rounded-full ${getBadgeColor(link.type)}`}>
+                {link.type.toUpperCase()}
+              </span>
+            )}
+          </div>
+          <p className="text-[10px] text-[#6B7280] mt-0.5 truncate">{link.url}</p>
+        </div>
+
+        {/* Analytics */}
+        <div className="flex items-center gap-4 flex-shrink-0">
+          <div className="text-right">
+            <p className="text-xs font-semibold text-[#111111]">{link.clicks || 0}</p>
+            <p className="text-[10px] text-[#6B7280]">CLICKS</p>
+          </div>
+
+          {/* Actions */}
+          <div className="flex items-center gap-0.5 flex-shrink-0">
+            <button
+              onClick={() => onEdit(link)}
+              className="p-1.5 text-gray-400 hover:text-[#111111] hover:bg-gray-100 rounded-lg transition-colors"
+            >
+              <Edit size={14} />
+            </button>
+            <button
+              onClick={() => onCopy(link.url)}
+              className="p-1.5 text-gray-400 hover:text-[#111111] hover:bg-gray-100 rounded-lg transition-colors"
+            >
+              <Copy size={14} />
+            </button>
+            <button
+              onClick={() => onToggle(link._id, link.enabled)}
+              className={`p-1.5 rounded-lg transition-colors ${
+                link.enabled ? 'text-[#111111] bg-[#111111]/10' : 'text-gray-400 bg-gray-100'
+              }`}
+            >
+              {link.enabled ? <Eye size={14} /> : <EyeOff size={14} />}
+            </button>
+            <button
+              onClick={() => onDelete(link._id)}
+              className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+            >
+              <Trash2 size={14} />
+            </button>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }

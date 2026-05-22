@@ -54,6 +54,7 @@ export default function BioPage() {
   const [selectedFontStyle, setSelectedFontStyle] = useState<FontStyle>('dm-sans');
 
   const profile = useQuery(api.users.getUserByClerkId, { clerkId: user?.id || '' });
+  const userLinks = useQuery(api.links.getEnabledLinksByUser, { userId: profile?._id || '' });
   const updateProfileMutation = useMutation(api.users.updateUserProfile);
   const createUserMutation = useMutation(api.users.createUser);
   const [creatingUser, setCreatingUser] = useState(false);
@@ -507,6 +508,7 @@ export default function BioPage() {
               linkedinUrl={formData.linkedinUrl}
               twitterUrl={formData.twitterUrl}
               youtubeUrl={formData.youtubeUrl}
+              userLinks={userLinks || []}
               theme={selectedTheme}
               buttonStyle={selectedButtonStyle}
               fontStyle={selectedFontStyle}
