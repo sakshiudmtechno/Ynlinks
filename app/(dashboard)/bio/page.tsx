@@ -176,30 +176,26 @@ export default function BioPage() {
   return (
     <div className="max-w-7xl mx-auto">
       {/* Header */}
-      <div className="flex items-center gap-3 mb-6">
-        {/* <div className="w-8 h-8 bg-[#111111] rounded-full flex items-center justify-center">
-          <span className="text-white text-sm font-medium">3</span>
-        </div> */}
-        {/* <div>
-          <h1 className="text-2xl font-bold text-[#111111]">Appearance</h1>
-          <p className="text-sm text-[#6B7280]">Theme, colors, fonts and button styles</p>
-        </div>
-        <div className="ml-auto flex items-center gap-2 bg-green-50 text-green-700 px-3 py-1.5 rounded-full text-xs font-medium">
-          <span>Complete</span>
-          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-            <path strokeLinecap="round" strokeLinejoin="round" d="M5 15l7-7 7 7" />
+      {/* <div className="flex items-center gap-3 mb-6"> */}
+      {/* <div className="w-10 h-10 bg-gradient-to-br from-[#2EE6A6] to-[#1FD695] rounded-xl flex items-center justify-center">
+          <svg className="w-5 h-5 text-white" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/>
           </svg>
+        </div>
+        <div>
+          <h1 className="text-2xl font-bold text-[#111111]">My Bio Page</h1>
+          <p className="text-sm text-[#6B7280]">Customize your public profile</p>
         </div> */}
-      </div>
+      {/* </div> */}
 
       {/* 2-Column Layout: Form + Preview */}
-      <div className="grid grid-cols-1 lg:grid-cols-[1fr_360px] gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-[1fr_340px] gap-6">
         {/* Left Column - Form Content */}
         <div className="space-y-6">
-
+          {/* Your Bio Link */}
           <div className="bg-white rounded-2xl border border-gray-200 p-6 shadow-sm">
-            <h3 className="text-lg font-semibold text-[#111111] mb-4">Your Bio Link</h3>
-            <p className="text-[#6B7280] text-sm mb-4">Share your custom bio link on all your social media platforms to start earning!</p>
+            <h3 className="text-lg font-semibold text-[#111111] mb-2">Your Bio Link</h3>
+            <p className="text-[#6B7280] text-sm mb-4">Share your custom bio link on all your social media platforms</p>
             <div className="flex gap-3">
               <input
                 type="text"
@@ -209,26 +205,26 @@ export default function BioPage() {
               />
               <button
                 onClick={copyToClipboard}
-                className={`px-6 py-3 rounded-xl hover:bg-[#1FD695] transition-all flex items-center gap-2 font-semibold shadow-lg ${copied ? 'bg-green-500 text-white' : 'bg-[#2EE6A6] text-white'
-                  }`}
+                className={`px-6 py-3 rounded-xl hover:bg-[#1FD695] transition-all flex items-center gap-2 font-semibold shadow-lg ${copied ? 'bg-green-500 text-white' : 'bg-[#2EE6A6] text-white'}`}
               >
                 {copied ? <Check className="h-5 w-5" /> : <Copy className="h-5 w-5" />}
-                {copied ? 'Copied!' : 'Copy Link'}
+                {copied ? 'Copied!' : 'Copy'}
               </button>
             </div>
             <a
               href={bioLink}
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center gap-2 mt-3 text-sm font-semibold text-[#2EE6A6] hover:text-[#1FD695] transition-colors"
+              className="inline-flex items-center gap-2 mt-3 text-sm font-medium text-[#2EE6A6] hover:text-[#1FD695] transition-colors"
             >
               <ExternalLink size={16} />
-              View your public page
+              View public page
             </a>
           </div>
 
+          {/* Profile Information */}
           <div className="bg-white rounded-2xl border border-gray-200 p-6 shadow-sm">
-            <h3 className="text-lg font-semibold text-[#111111] mb-6">Profile Information</h3>
+            <h3 className="text-lg font-semibold text-[#111111] mb-6">Profile</h3>
 
             <div className="flex items-start gap-6 mb-6">
               <div className="flex-shrink-0">
@@ -269,142 +265,144 @@ export default function BioPage() {
             </div>
           </div>
 
-
-
-          {/* Theme Presets */}
+          {/* Appearance */}
           <div className="bg-white rounded-2xl border border-gray-200 p-6 shadow-sm">
-            <h3 className="text-lg font-semibold text-[#111111] mb-4">Theme</h3>
-            <div className="grid grid-cols-4 gap-3">
-              {themes.map((theme) => (
-                <button
-                  key={theme.id}
-                  onClick={() => setSelectedTheme(theme.id)}
-                  className={`relative rounded-xl overflow-hidden aspect-square group transition-all ${selectedTheme === theme.id
-                    ? 'ring-2 ring-black ring-offset-2'
-                    : 'ring-1 ring-gray-200 hover:ring-gray-400'
-                    }`}
-                >
-                  <div
-                    className="absolute inset-0"
-                    style={{
-                      background: `linear-gradient(135deg, ${theme.colors[0]} 50%, ${theme.colors[1]} 50%)`,
-                    }}
-                  />
-                  {selectedTheme === theme.id && (
-                    <div className="absolute top-1 right-1 w-4 h-4 bg-black rounded-full flex items-center justify-center">
-                      <svg className="w-2.5 h-2.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-                      </svg>
-                    </div>
-                  )}
-                  <span className="absolute bottom-1 left-1.5 text-[8px] font-medium text-white drop-shadow-md">
-                    {theme.name}
-                  </span>
-                </button>
-              ))}
-            </div>
-          </div>
+            <h3 className="text-lg font-semibold text-[#111111] mb-6">Appearance</h3>
 
-          {/* Button Style */}
-          <div className="bg-white rounded-2xl border border-gray-200 p-6 shadow-sm">
-            <h3 className="text-lg font-semibold text-[#111111] mb-4">Button Style</h3>
-            <div className="grid grid-cols-4 gap-3">
-              {buttonStyles.map((style) => (
-                <button
-                  key={style.id}
-                  onClick={() => setSelectedButtonStyle(style.id)}
-                  className={`py-3 px-4 border-2 transition-all ${selectedButtonStyle === style.id
-                    ? 'border-black bg-black text-white'
-                    : 'border-gray-200 bg-white text-[#111111] hover:border-gray-400'
-                    } ${style.id === 'pill' ? 'rounded-full' :
-                      style.id === 'rounded' ? 'rounded-xl' :
-                        style.id === 'square' ? 'rounded-lg' : 'rounded'
-                    }`}
-                >
-                  <span className="text-sm font-medium">{style.name}</span>
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {/* Typography */}
-          <div className="bg-white rounded-2xl border border-gray-200 p-6 shadow-sm">
-            <h3 className="text-lg font-semibold text-[#111111] mb-4">Typography</h3>
-            <div className="grid grid-cols-2 gap-3">
-              {fontStyles.map((font) => (
-                <button
-                  key={font.id}
-                  onClick={() => setSelectedFontStyle(font.id)}
-                  className={`p-4 border-2 text-left transition-all ${selectedFontStyle === font.id
-                    ? 'border-black bg-black text-white'
-                    : 'border-gray-200 bg-white text-[#111111] hover:border-gray-400'
-                    }`}
-                >
-                  <p
-                    className={`text-lg mb-1 ${font.family === 'serif' ? 'font-serif' : font.family === 'sans-serif' ? 'font-sans' : 'font-mono'}`}
+            {/* Theme */}
+            {/* <div className="mb-6">
+              <label className="block text-sm font-bold text-[#111111] mb-3">Theme</label>
+              <div className="grid grid-cols-4 gap-2 ">
+                {themes.map((theme) => (
+                  <button
+                    key={theme.id}
+                    onClick={() => setSelectedTheme(theme.id)}
+                    className={`relative rounded-xl overflow-hidden aspect-square group transition-all ${selectedTheme === theme.id ? 'ring-2 ring-[#2EE6A6] ring-offset-2' : 'ring-1 ring-gray-200 hover:ring-gray-400'}`}
                   >
-                    {font.name}
-                  </p>
-                  <p className={`text-[10px] ${font.family === 'serif' ? 'font-serif' : font.family === 'sans-serif' ? 'font-sans' : 'font-mono'} ${selectedFontStyle === font.id ? 'text-gray-300' : 'text-gray-400'
-                    }`}>
-                    Aa Bb Cc 123
-                  </p>
-                </button>
-              ))}
+                    <div
+                      className="absolute inset-0"
+                      style={{
+                        background: `linear-gradient(135deg, ${theme.colors[0]} 50%, ${theme.colors[1]} 50%)`,
+                      }}
+                    />
+                    {selectedTheme === theme.id && (
+                      <div className="absolute top-1 right-1 w-4 h-4 bg-[#2EE6A6] rounded-full flex items-center justify-center">
+                        <svg className="w-2.5 h-2.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                        </svg>
+                      </div>
+                    )}
+                    <span className="absolute bottom-1 left-1.5 text-[8px] font-medium text-white drop-shadow-md">
+                      {theme.name}
+                    </span>
+                  </button>
+                ))}
+              </div>
+            </div> */}
+
+            {/* Theme */}
+            <div className="mb-6">
+              <label className="block text-sm font-bold text-[#111111] mb-3">
+                Theme Presets
+              </label>
+
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                {themes.map((theme) => (
+                  <button
+                    key={theme.id}
+                    onClick={() => setSelectedTheme(theme.id)}
+                    className={`relative h-16 overflow-hidden rounded-2xl border-2 transition-all ${selectedTheme === theme.id
+                        ? 'border-[#111111] shadow-md'
+                        : 'border-gray-200 hover:border-gray-400'
+                      }`}
+                  >
+                    {/* Split Background */}
+                    <div
+                      className="absolute inset-0"
+                      style={{
+                        background: `linear-gradient(
+              135deg,
+              ${theme.colors[0]} 0%,
+              ${theme.colors[0]} 50%,
+              ${theme.colors[1]} 50%,
+              ${theme.colors[1]} 100%
+            )`,
+                      }}
+                    />
+
+                    {/* Selected Tick */}
+                    {selectedTheme === theme.id && (
+                      <div className="absolute top-2 right-2 w-6 h-6 bg-black rounded-full flex items-center justify-center">
+                        <svg
+                          className="w-3.5 h-3.5 text-white"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          stroke="currentColor"
+                          strokeWidth={3}
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            d="M5 13l4 4L19 7"
+                          />
+                        </svg>
+                      </div>
+                    )}
+
+                    {/* Theme Name */}
+                    <span className="absolute bottom-2 left-3 text-xs font-semibold text-white drop-shadow-md">
+                      {theme.name}
+                    </span>
+                  </button>
+                ))}
+              </div>
+            </div>
+            {/* Button Style */}
+            <div className="mb-6">
+              <label className="block text-sm font-bold text-[#111111] mb-3">Button Style</label>
+              <div className="grid grid-cols-4 gap-2">
+                {buttonStyles.map((style) => (
+                  <button
+                    key={style.id}
+                    onClick={() => setSelectedButtonStyle(style.id)}
+                    className={`py-2.5 px-3 border-2 transition-all text-sm font-medium ${selectedButtonStyle === style.id ? 'border-[#2EE6A6] bg-[#2EE6A6] text-white' : 'border-gray-200 bg-white text-[#111111] hover:border-gray-400'} ${style.id === 'pill' ? 'rounded-full' : style.id === 'rounded' ? 'rounded-xl' : style.id === 'square' ? 'rounded-lg' : 'rounded'}`}
+                  >
+                    {style.name}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Typography */}
+            <div>
+              <label className="block text-sm font-bold text-[#111111] mb-3">Font</label>
+              <div className="grid grid-cols-4 gap-2 ">
+                {fontStyles.map((font) => (
+                  <button
+                    key={font.id}
+                    onClick={() => setSelectedFontStyle(font.id)}
+                    className={`p-3 border-2 text-left transition-all rounded-lg h-16 ${selectedFontStyle === font.id ? 'border-[#2EE6A6] bg-[#2EE6A6] text-white' : 'border-gray-200 bg-white text-[#111111] hover:border-gray-400'}`}
+                  >
+                    <p className={`text-base font-medium ${font.family === 'serif' ? 'font-serif' : font.family === 'sans-serif' ? 'font-sans' : 'font-mono'}`}>
+                      {font.name}
+                    </p>
+                    <p className={`text-[10px] mt-0.5 ${font.family === 'serif' ? 'font-serif' : font.family === 'sans-serif' ? 'font-sans' : 'font-mono'} ${selectedFontStyle === font.id ? 'text-white/70' : 'text-[#6B7280]'}`}>
+                      Aa Bb Cc 123
+                    </p>
+                  </button>
+                ))}
+              </div>
             </div>
           </div>
-
-          {/* Profile Info */}
-          {/* <div className="bg-white rounded-2xl border border-gray-200 p-6 shadow-sm">
-            <h3 className="text-lg font-semibold text-[#111111] mb-6">Profile Information</h3>
-
-            <div className="flex items-start gap-6 mb-6">
-              <div className="flex-shrink-0">
-                {formData.avatarUrl ? (
-                  <div className="relative group">
-                    <img src={formData.avatarUrl} alt="Avatar" className="w-24 h-24 rounded-full object-cover border-4 border-[#2EE6A6]" />
-                    <label className="absolute inset-0 bg-black/50 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer">
-                      <input type="file" accept="image/*" onChange={handleImageUpload} className="hidden" />
-                      <span className="text-white text-sm font-semibold">Change</span>
-                    </label>
-                  </div>
-                ) : (
-                  <label className="w-24 h-24 rounded-full bg-gradient-to-br from-[#2EE6A6] to-[#1FD695] flex items-center justify-center cursor-pointer hover:opacity-80 transition-opacity">
-                    <input type="file" accept="image/*" onChange={handleImageUpload} className="hidden" />
-                    <span className="text-4xl font-bold text-white">{(profile?.displayName || profile?.username || 'U').charAt(0).toUpperCase()}</span>
-                  </label>
-                )}
-              </div>
-              <div className="flex-1">
-                <h4 className="text-xl font-bold text-[#111111] mb-1">{profile?.displayName || profile?.username}</h4>
-                <p className="text-[#6B7280]">@{profile?.username}</p>
-              </div>
-            </div>
-
-            <div>
-              <label className="block text-sm font-semibold text-[#111111] mb-2">
-                Bio <span className="text-[#6B7280] font-normal">(max 80 characters)</span>
-              </label>
-              <textarea
-                value={formData.bio}
-                onChange={(e) => setFormData({ ...formData, bio: e.target.value })}
-                maxLength={80}
-                rows={3}
-                placeholder="Tell visitors about yourself..."
-                className="w-full border-2 border-gray-200 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-[#2EE6A6] focus:border-transparent transition-all resize-none"
-              />
-              <p className="text-xs text-[#6B7280] mt-1 text-right">{remainingChars} characters remaining</p>
-            </div>
-          </div> */}
 
           {/* Social Links */}
           <div className="bg-white rounded-2xl border border-gray-200 p-6 shadow-sm">
-            <h3 className="text-lg font-semibold text-[#111111] mb-6">Social Media Links</h3>
-            <p className="text-[#6B7280] text-sm mb-6">Add your social media profiles to display on your public page</p>
+            <h3 className="text-lg font-semibold text-[#111111] mb-2">Social Links</h3>
+            <p className="text-[#6B7280] text-sm mb-6">Add your social media profiles to display on your bio page</p>
 
-            <div className="space-y-4">
+            <div className="space-y-3">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center">
+                <div className="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center flex-shrink-0">
                   <Facebook className="w-5 h-5 text-white" />
                 </div>
                 <input
@@ -417,7 +415,7 @@ export default function BioPage() {
               </div>
 
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-gradient-to-br from-purple-500 via-pink-500 to-orange-500 rounded-lg flex items-center justify-center">
+                <div className="w-10 h-10 bg-gradient-to-br from-purple-500 via-pink-500 to-orange-500 rounded-lg flex items-center justify-center flex-shrink-0">
                   <Instagram className="w-5 h-5 text-white" />
                 </div>
                 <input
@@ -430,7 +428,7 @@ export default function BioPage() {
               </div>
 
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-blue-700 rounded-lg flex items-center justify-center">
+                <div className="w-10 h-10 bg-blue-700 rounded-lg flex items-center justify-center flex-shrink-0">
                   <Linkedin className="w-5 h-5 text-white" />
                 </div>
                 <input
@@ -443,7 +441,7 @@ export default function BioPage() {
               </div>
 
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-black rounded-lg flex items-center justify-center">
+                <div className="w-10 h-10 bg-black rounded-lg flex items-center justify-center flex-shrink-0">
                   <Twitter className="w-5 h-5 text-white" />
                 </div>
                 <input
@@ -456,7 +454,7 @@ export default function BioPage() {
               </div>
 
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-red-600 rounded-lg flex items-center justify-center">
+                <div className="w-10 h-10 bg-red-600 rounded-lg flex items-center justify-center flex-shrink-0">
                   <Youtube className="w-5 h-5 text-white" />
                 </div>
                 <input
@@ -470,47 +468,12 @@ export default function BioPage() {
             </div>
           </div>
 
-          {/* Bio Link */}
-          {/* <div className="bg-white rounded-2xl border border-gray-200 p-6 shadow-sm">
-            <h3 className="text-lg font-semibold text-[#111111] mb-4">Your Bio Link</h3>
-            <p className="text-[#6B7280] text-sm mb-4">Share your custom bio link on all your social media platforms to start earning!</p>
-            <div className="flex gap-3">
-              <input
-                type="text"
-                value={bioLink}
-                readOnly
-                className="flex-1 border-2 border-gray-200 rounded-xl px-4 py-3 bg-gray-50 text-[#6B7280] font-mono text-sm"
-              />
-              <button
-                onClick={copyToClipboard}
-                className={`px-6 py-3 rounded-xl hover:bg-[#1FD695] transition-all flex items-center gap-2 font-semibold shadow-lg ${
-                  copied ? 'bg-green-500 text-white' : 'bg-[#2EE6A6] text-white'
-                }`}
-              >
-                {copied ? <Check className="h-5 w-5" /> : <Copy className="h-5 w-5" />}
-                {copied ? 'Copied!' : 'Copy Link'}
-              </button>
-            </div>
-            <a
-              href={bioLink}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-2 mt-3 text-sm font-semibold text-[#2EE6A6] hover:text-[#1FD695] transition-colors"
-            >
-              <ExternalLink size={16} />
-              View your public page
-            </a>
-          </div> */}
-
           {/* Save Button */}
           <button
             type="button"
             onClick={handleSubmit}
             disabled={saving}
-            className={`w-full py-4 rounded-xl font-semibold text-lg transition-all flex items-center justify-center gap-2 shadow-lg ${saved
-              ? 'bg-green-500 text-white'
-              : 'bg-[#2EE6A6] text-white hover:bg-[#1FD695]'
-              }`}
+            className={`w-full py-4 rounded-xl font-semibold text-lg transition-all flex items-center justify-center gap-2 shadow-lg ${saved ? 'bg-green-500 text-white' : 'bg-[#2EE6A6] text-white hover:bg-[#1FD695]'}`}
           >
             {saving ? (
               <>
@@ -557,11 +520,9 @@ export default function BioPage() {
         <button
           onClick={() => {
             const preview = document.getElementById('mobile-preview-panel');
-            if (preview) {
-              preview.classList.toggle('hidden');
-            }
+            if (preview) preview.classList.toggle('hidden');
           }}
-          className="w-14 h-14 bg-[#2EE6A6] text-white rounded-full shadow-lg flex items-center justify-center hover:bg-[#1FD695] transition-all hover:scale-105 active:scale-95"
+          className="w-14 h-14 bg-[#2EE6A6] text-white rounded-full shadow-lg flex items-center justify-center hover:bg-[#1FD695] transition-all"
           title="Toggle Preview"
         >
           <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -578,9 +539,7 @@ export default function BioPage() {
             <button
               onClick={() => {
                 const preview = document.getElementById('mobile-preview-panel');
-                if (preview) {
-                  preview.classList.add('hidden');
-                }
+                if (preview) preview.classList.add('hidden');
               }}
               className="w-8 h-8 bg-gray-200 rounded-full flex items-center justify-center text-gray-600 hover:bg-gray-300 transition-colors"
             >
