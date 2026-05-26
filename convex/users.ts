@@ -200,3 +200,113 @@ export const checkEmailAvailability = query({
     return { available: !existingUser };
   },
 });
+
+export const updatePageSettings = mutation({
+  args: {
+    userId: v.id('users'),
+    pageVisible: v.optional(v.boolean()),
+    showBranding: v.optional(v.boolean()),
+    allowIndexing: v.optional(v.boolean()),
+  },
+  handler: async (ctx, args) => {
+    const { userId, ...updates } = args;
+    const filteredUpdates = Object.fromEntries(
+      Object.entries(updates).filter(([, value]) => value !== undefined)
+    );
+    await ctx.db.patch(userId, filteredUpdates);
+    return { success: true };
+  },
+});
+
+export const clearAllLinks = mutation({
+  args: { userId: v.id('users') },
+  handler: async (ctx, args) => {
+    const links = await ctx.db
+      .query('links')
+      .withIndex('by_user_id', (q) => q.eq('userId', args.userId))
+      .collect();
+
+    for (const link of links) {
+      await ctx.db.delete(link._id);
+    }
+    return { success: true, deleted: links.length };
+  },
+});
+
+export const deleteAccount = mutation({
+  args: { userId: v.id('users') },
+  handler: async (ctx, args) => {
+    // Delete all user's links
+    const links = await ctx.db
+      .query('links')
+      .withIndex('by_user_id', (q) => q.eq('userId', args.userId))
+      .collect();
+
+    for (const link of links) {
+      await ctx.db.delete(link._id);
+    }
+
+    // Delete all user's link clicks
+    const clicks = await ctx.db
+      .query('linkClicks')
+      .withIndex('by_user_id', (q) => q.eq('userId', args.userId))
+      .collect();
+
+    for (const click of clicks) {
+      await ctx.db.delete(click._id);
+    }
+
+    // Delete all user's bio visits
+    const visits = await ctx.db
+      .query('bioVisits')
+      .withIndex('by_user_id', (q) => q.eq('userId', args.userId))
+      .collect();
+
+    for (const visit of visits) {
+      await ctx.db.delete(visit._id);
+    }
+
+    // Delete the user
+    await ctx.db.delete(args.userId);
+    return { success: true };
+  },
+});
+
+export const getUserLinks = query({
+  args: { userId: v.string() },
+  handler: async (ctx, args) => {
+    const links = await ctx.db
+      .query('links')
+      .withIndex('by_user_id', (q) => q.eq('userId', args.userId))
+      .collect();
+
+    return links;
+  },
+});
+
+export const exportUserData = query({
+  args: { userId: v.id('users') },
+  handler: async (ctx, args) => {
+    const user = await ctx.db.get(args.userId);
+    const links = await ctx.db
+      .query('links')
+      .withIndex('by_user_id', (q) => q.eq('userId', args.userId))
+      .collect();
+    const clicks = await ctx.db
+      .query('linkClicks')
+      .withIndex('by_user_id', (q) => q.eq('userId', args.userId))
+      .collect();
+    const withdrawals = await ctx.db
+      .query('withdrawals')
+      .withIndex('by_user_id', (q) => q.eq('userId', args.userId))
+      .collect();
+
+    return {
+      user,
+      links,
+      clicks,
+      withdrawals,
+      exportedAt: new Date().toISOString(),
+    };
+  },
+});

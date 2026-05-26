@@ -23,6 +23,10 @@ export default defineSchema({
     balance: v.optional(v.number()),
     status: v.optional(v.string()),
     createdAt: v.optional(v.string()),
+    // Page settings
+    pageVisible: v.optional(v.boolean()),
+    showBranding: v.optional(v.boolean()),
+    allowIndexing: v.optional(v.boolean()),
     // Social links
     facebookUrl: v.optional(v.string()),
     instagramUrl: v.optional(v.string()),
@@ -41,6 +45,8 @@ export default defineSchema({
     description: v.optional(v.string()),
     thumbnailUrl: v.optional(v.string()),
     enabled: v.boolean(),
+    archived: v.optional(v.boolean()),
+    pinned: v.optional(v.boolean()),
     orderIndex: v.number(),
     clicks: v.number(),
     clickCount: v.optional(v.number()),
@@ -49,6 +55,7 @@ export default defineSchema({
   })
     .index('by_user_id', ['userId'])
     .index('by_user_enabled', ['userId', 'enabled'])
+    .index('by_user_archived', ['userId', 'archived'])
     .index('by_order', ['userId', 'orderIndex']),
 
   linkClicks: defineTable({

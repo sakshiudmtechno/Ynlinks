@@ -19,6 +19,14 @@ interface BioPreviewProps {
   linkedinUrl: string;
   twitterUrl: string;
   youtubeUrl: string;
+  userLinks?: Array<{
+    _id: string;
+    title: string;
+    url: string;
+    thumbnailUrl?: string;
+    enabled?: boolean;
+    archived?: boolean;
+  }>;
   theme?: 'warm-ink' | 'pure' | 'forest' | 'ocean' | 'rose' | 'amber' | 'slate' | 'parchment';
   buttonStyle?: 'pill' | 'rounded' | 'square' | 'sharp';
   fontStyle?: 'fraunces' | 'dm-sans' | 'georgia' | 'mono';
@@ -107,6 +115,7 @@ export function BioPreview({
   linkedinUrl,
   twitterUrl,
   youtubeUrl,
+  userLinks = [],
   theme = 'parchment',
   buttonStyle = 'pill',
   fontStyle = 'dm-sans',
@@ -153,18 +162,18 @@ export function BioPreview({
       {/* iPhone Mockup */}
       <div className="flex justify-center">
         <div
-          className="relative bg-black rounded-[1.8rem] p-1 shadow-xl"
-          style={{ width: '200px' }}
+          className="relative bg-black rounded-[1.8rem] p-1 shadow-xl overflow-hidden"
+          style={{ width: '200px', height: '420px' }}
         >
           {/* Screen */}
-          <div className={`rounded-[1.6rem] overflow-hidden relative bg-gradient-to-b ${currentTheme.bg}`}>
+          <div className={`rounded-[1.6rem] h-full overflow-hidden relative bg-gradient-to-b ${currentTheme.bg}`}>
             {/* Dynamic Island */}
             <div className="absolute top-1.5 left-1/2 -translate-x-1/2 w-14 h-4 bg-black rounded-full z-10"></div>
 
-            {/* Content */}
-            <div className={`pt-8 px-3 pb-5 min-h-[400px] flex flex-col items-center ${fontFamilies[fontStyle]}`}>
+            {/* Scrollable Content */}
+            <div className={`pt-8 px-3 pb-5 h-full overflow-y-auto scrollbar-hide ${fontFamilies[fontStyle]}`}>
               {/* Avatar */}
-              <div className="mb-3">
+              <div className="mb-3 flex justify-center">
                 {avatarUrl ? (
                   <img
                     src={avatarUrl}
@@ -220,26 +229,34 @@ export function BioPreview({
                 </div>
               )}
 
-             
+
               {/* Sample Link Button */}
-              {socialLinks.length === 0 && (
+              {socialLinks.length === 0 && userLinks.length === 0 && (
                 <div className={`mt-4 ${currentTheme.cardBg} border ${currentTheme.border} ${buttonStyles[buttonStyle]} px-4 py-2`}>
                   <p className={`${currentTheme.text} text-[9px] font-medium`}>Your Link</p>
                 </div>
               )}
 
-              {/* Sample Link Buttons */}
-              {socialLinks.length > 0 && (
-                <div className="mt-3 space-y-2 w-full">
-                  {[1, 2].slice(0, Math.min(socialLinks.length, 2)).map((_, idx) => (
-                    <div
-                      key={idx}
-                      className={`${currentTheme.cardBg} border ${currentTheme.border} ${buttonStyles[buttonStyle]} px-4 py-2.5`}
+              {/* User Links */}
+              {userLinks.filter(l => l.enabled !== false && l.archived !== true).length > 0 && (
+                <div className="mt-3 space-y-2 w-full pb-4">
+                  {userLinks.filter(l => l.enabled !== false && l.archived !== true).slice(0, 5).map((link, idx) => (
+                    <a
+                      key={link._id || idx}
+                      href={link.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className={`${currentTheme.cardBg} border ${currentTheme.border} ${buttonStyles[buttonStyle]} px-4 py-2.5 flex items-center gap-2`}
                     >
-                      <p className={`${currentTheme.text} text-[9px] font-medium text-center`}>
-                        Sample Link {idx + 1}
+                      {link.thumbnailUrl ? (
+                        <img src={link.thumbnailUrl} alt="" className="w-4 h-4 rounded object-cover flex-shrink-0" />
+                      ) : (
+                        <div className="w-4 h-4 rounded bg-[#2EE6A6]/20 flex-shrink-0" />
+                      )}
+                      <p className={`${currentTheme.text} text-[9px] font-medium truncate flex-1`}>
+                        {link.title}
                       </p>
-                    </div>
+                    </a>
                   ))}
                 </div>
               )}

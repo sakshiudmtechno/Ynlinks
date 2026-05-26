@@ -64,6 +64,8 @@ export const createLink = mutation({
       description: args.description,
       thumbnailUrl: args.thumbnailUrl,
       enabled: args.enabled,
+      archived: false,
+      pinned: false,
       orderIndex: maxOrder + 1,
       clicks: 0,
       clickCount: 0,
@@ -123,6 +125,28 @@ export const toggleLinkEnabled = mutation({
   },
   handler: async (ctx, args) => {
     await ctx.db.patch(args.linkId, { enabled: args.enabled });
+    return { success: true };
+  },
+});
+
+export const toggleLinkArchived = mutation({
+  args: {
+    linkId: v.id('links'),
+    archived: v.boolean(),
+  },
+  handler: async (ctx, args) => {
+    await ctx.db.patch(args.linkId, { archived: args.archived });
+    return { success: true };
+  },
+});
+
+export const toggleLinkPinned = mutation({
+  args: {
+    linkId: v.id('links'),
+    pinned: v.boolean(),
+  },
+  handler: async (ctx, args) => {
+    await ctx.db.patch(args.linkId, { pinned: args.pinned });
     return { success: true };
   },
 });

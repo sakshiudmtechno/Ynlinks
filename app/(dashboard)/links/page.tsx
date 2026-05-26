@@ -1,11 +1,11 @@
 'use client';
 
-import { useState } from 'react';
+import React, { useState } from 'react';
 import { useUser } from '@clerk/nextjs';
 import { useQuery, useMutation } from 'convex/react';
 import { api } from '@/convex/_generated/api';
 import { Id } from '@/convex/_generated/dataModel';
-import { Plus, X, GripVertical, Edit, Eye, EyeOff, Trash2, BarChart3, Image as ImageIcon, Link2, Search, Pin, Copy, ChevronDown, Share2, ExternalLink } from 'lucide-react';
+import { Plus, X, GripVertical, Edit,  Trash2, BarChart3, Image as ImageIcon, Link2, Search, Pin, Copy, ChevronDown, Share2, ExternalLink, Archive } from 'lucide-react';
 import { BioPreview } from '@/components/BioPreview';
 
 interface Link {
@@ -15,10 +15,14 @@ interface Link {
   description?: string;
   thumbnailUrl?: string;
   enabled: boolean;
+  archived?: boolean;
+  pinned?: boolean;
   clicks: number;
   orderIndex: number;
   userId: string;
   type?: string;
+  earned?: number;
+  ctr?: number;
 }
 
 export default function LinksPage() {
@@ -29,6 +33,7 @@ export default function LinksPage() {
   const [draggedItem, setDraggedItem] = useState<string | null>(null);
   const [dragOverItem, setDragOverItem] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
+  const [showArchived, setShowArchived] = useState(false);
   const [formData, setFormData] = useState({
     title: '',
     url: '',
@@ -46,18 +51,24 @@ export default function LinksPage() {
   const updateLinkMutation = useMutation(api.links.updateLink);
   const deleteLinkMutation = useMutation(api.links.deleteLink);
   const toggleLinkMutation = useMutation(api.links.toggleLinkEnabled);
+  const toggleLinkArchivedMutation = useMutation(api.links.toggleLinkArchived);
+  const toggleLinkPinnedMutation = useMutation(api.links.toggleLinkPinned);
   const reorderLinksMutation = useMutation(api.links.reorderLinks);
 
   const links = linksData || [];
   const filteredLinks = links.filter(link =>
-    link.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    link.url.toLowerCase().includes(searchQuery.toLowerCase())
+    !link.archived &&
+    (link.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    link.url.toLowerCase().includes(searchQuery.toLowerCase()))
   );
 
-  const activeLinks = filteredLinks.filter(l => l.enabled).sort((a, b) => a.orderIndex - b.orderIndex);
+  const archivedLinks = links.filter(l => l.archived);
+  const pinnedLinks = filteredLinks.filter(l => l.pinned === true);
+  const activeLinks = filteredLinks.filter(l => l.enabled && l.pinned !== true).sort((a, b) => a.orderIndex - b.orderIndex);
 
   const handleOpenModal = (link?: Link) => {
-    if (!link && links.length >= 5) {
+    const activeLinkCount = links.filter(l => !l.archived).length;
+    if (!link && activeLinkCount >= 5) {
       alert('Maximum 5 links allowed.');
       return;
     }
@@ -148,6 +159,22 @@ export default function LinksPage() {
     }
   };
 
+  const handleArchive = async (linkId: string, currentArchived: boolean) => {
+    try {
+      await toggleLinkArchivedMutation({ linkId: linkId as any, archived: !currentArchived });
+    } catch (error: any) {
+      alert(error.message);
+    }
+  };
+
+  const handlePin = async (linkId: string, currentPinned: boolean) => {
+    try {
+      await toggleLinkPinnedMutation({ linkId: linkId as any, pinned: !currentPinned });
+    } catch (error: any) {
+      alert(error.message);
+    }
+  };
+
   const handleDragStart = (e: React.DragEvent, id: string) => {
     setDraggedItem(id);
     e.dataTransfer.effectAllowed = 'move';
@@ -200,7 +227,7 @@ export default function LinksPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#FAF8F5]">
+    <div className="min-h-screen ">
       <div className="max-w-6xl mx-auto ">
         {/* Header */}
         <div className="flex items-center justify-between mb-6">
@@ -209,15 +236,14 @@ export default function LinksPage() {
             <p className="text-sm text-[#6B7280] mt-0.5">Manage and organize your public links</p>
           </div>
           <div className="flex items-center gap-4">
-            <span className="text-sm font-medium text-[#6B7280]">{links.filter(l => l.enabled).length} links</span>
+            <span className="text-sm font-medium text-[#6B7280]">{links.filter(l => l.enabled && !l.archived).length} links</span>
             <button
               onClick={() => handleOpenModal()}
-              disabled={links.length >= 5}
-              className={`px-4 py-2 rounded-full font-semibold text-sm flex items-center gap-2 transition-all ${
-                links.length >= 5
+              disabled={links.filter(l => !l.archived).length >= 5}
+              className={`px-4 py-2 rounded-full font-semibold text-sm flex items-center gap-2 transition-all ${links.length >= 5
                   ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
                   : 'bg-[#111111] text-white hover:bg-black'
-              }`}
+                }`}
             >
               <Plus size={16} />
               Add Link
@@ -256,13 +282,51 @@ export default function LinksPage() {
 
             {/* Links Sections */}
             <div className="space-y-6">
+              {/* PINNED Section */}
+              {pinnedLinks.length > 0 && (
+                <div>
+                  {/* Section Divider with Badge */}
+                  <div className="flex items-center gap-3 mb-3">
+                    <div className="flex-1 h-px bg-gray-200"></div>
+                    <span className="px-3 py-1 bg-orange-100 text-orange-600 text-xs font-semibold rounded-full flex items-center gap-1.5">
+                      <Pin size={11} />
+                      PINNED
+                    </span>
+                    <div className="flex-1 h-px bg-gray-200"></div>
+                  </div>
+                  <div className="space-y-2">
+                    {pinnedLinks.map((link) => (
+                      <LinkCard
+                        key={link._id}
+                        link={link}
+                        onEdit={handleOpenModal}
+                        onToggle={handleToggle}
+                        onDelete={handleDelete}
+                        onArchive={handleArchive}
+                        onPin={handlePin}
+                        onCopy={copyLink}
+                        onDragStart={handleDragStart}
+                        onDragOver={handleDragOver}
+                        onDrop={handleDrop}
+                        draggedItem={draggedItem}
+                        dragOverItem={dragOverItem}
+                        isPinned
+                      />
+                    ))}
+                  </div>
+                </div>
+              )}
+
               {/* ALL LINKS Section */}
               {activeLinks.length > 0 && (
                 <div>
+                  {/* Section Divider with Badge */}
                   <div className="flex items-center gap-3 mb-3">
+                    <div className="flex-1 h-px bg-gray-200"></div>
                     <span className="px-3 py-1 bg-[#F5F0E8] text-[#6B7280] text-xs font-semibold rounded-full">
                       ALL LINKS
                     </span>
+                    <div className="flex-1 h-px bg-gray-200"></div>
                   </div>
                   <div className="space-y-2">
                     {activeLinks.map((link) => (
@@ -272,6 +336,8 @@ export default function LinksPage() {
                         onEdit={handleOpenModal}
                         onToggle={handleToggle}
                         onDelete={handleDelete}
+                        onArchive={handleArchive}
+                        onPin={handlePin}
                         onCopy={copyLink}
                         onDragStart={handleDragStart}
                         onDragOver={handleDragOver}
@@ -284,8 +350,49 @@ export default function LinksPage() {
                 </div>
               )}
 
+              {/* Archived Links Toggle */}
+              {archivedLinks.length > 0 && (
+                <div>
+                  {/* Section Divider with Badge */}
+                  <div className="flex items-center gap-3 mb-3">
+                    <div className="flex-1 h-px bg-gray-200"></div>
+                    <button
+                      onClick={() => setShowArchived(!showArchived)}
+                      className="px-3 py-1 bg-gray-100 text-[#6B7280] text-xs font-semibold rounded-full flex items-center gap-1.5 hover:bg-gray-200 transition-colors"
+                    >
+                      <Archive size={11} />
+                      {archivedLinks.length} Archived
+                      <ChevronDown size={11} className={`transition-transform ${showArchived ? 'rotate-180' : ''}`} />
+                    </button>
+                    <div className="flex-1 h-px bg-gray-200"></div>
+                  </div>
+                  {showArchived && (
+                    <div className="space-y-2">
+                      {archivedLinks.map((link) => (
+                        <LinkCard
+                          key={link._id}
+                          link={link}
+                          onEdit={handleOpenModal}
+                          onToggle={handleToggle}
+                          onDelete={handleDelete}
+                          onArchive={handleArchive}
+                          onPin={handlePin}
+                          onCopy={copyLink}
+                          onDragStart={handleDragStart}
+                          onDragOver={handleDragOver}
+                          onDrop={handleDrop}
+                          draggedItem={draggedItem}
+                          dragOverItem={dragOverItem}
+                          isArchived
+                        />
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
+
               {/* Empty State */}
-              {links.length === 0 && (
+              {links.filter(l => !l.archived).length === 0 && (
                 <div className="bg-white rounded-2xl border-2 border-dashed border-gray-300 p-16 text-center">
                   <div className="w-16 h-16 bg-[#2EE6A6]/10 rounded-2xl flex items-center justify-center mx-auto mb-4">
                     <Link2 className="text-[#2EE6A6]" size={32} />
@@ -305,7 +412,7 @@ export default function LinksPage() {
               )}
 
               {/* Add Link Button */}
-              {links.length > 0 && links.length < 5 && (
+              {links.filter(l => !l.archived).length > 0 && links.filter(l => !l.archived).length < 5 && (
                 <button
                   onClick={() => handleOpenModal()}
                   className="w-full py-8 border-2 border-dashed border-gray-300 rounded-2xl text-gray-400 hover:border-gray-400 hover:text-gray-500 transition-all flex items-center justify-center gap-2"
@@ -318,7 +425,7 @@ export default function LinksPage() {
           </div>
 
           {/* Right Column - Live Preview */}
-          <div className="hidden xl:block">
+          {/* <div className="hidden xl:block">
             <div className="sticky top-4">
               <div className="bg-white rounded-xl border border-gray-200 p-3 shadow-sm">
                 <div className="flex items-center gap-2 mb-3">
@@ -351,6 +458,26 @@ export default function LinksPage() {
                   </button>
                 </div>
               </div>
+            </div>
+          </div> */}
+
+          <div className="hidden lg:block">
+            <div className="sticky top-4">
+              <BioPreview
+                avatarUrl={profile?.avatarUrl || ''}
+                displayName={profile?.displayName || profile?.username || ''}
+                username={profile?.username || ''}
+                bio={profile?.bio || ''}
+                facebookUrl={profile?.facebookUrl || ''}
+                instagramUrl={profile?.instagramUrl || ''}
+                linkedinUrl={profile?.linkedinUrl || ''}
+                twitterUrl={profile?.twitterUrl || ''}
+                youtubeUrl={profile?.youtubeUrl || ''}
+                userLinks={links}
+                theme={(profile?.theme as any) || 'parchment'}
+                buttonStyle={(profile?.buttonStyle as any) || 'pill'}
+                fontStyle={(profile?.fontStyle as any) || 'dm-sans'}
+              />
             </div>
           </div>
         </div>
@@ -489,14 +616,12 @@ export default function LinksPage() {
                   <button
                     type="button"
                     onClick={() => setFormData({ ...formData, enabled: !formData.enabled })}
-                    className={`relative inline-flex h-8 w-14 items-center rounded-full transition-colors ${
-                      formData.enabled ? 'bg-[#111111]' : 'bg-gray-300'
-                    }`}
+                    className={`relative inline-flex h-8 w-14 items-center rounded-full transition-colors ${formData.enabled ? 'bg-[#111111]' : 'bg-gray-300'
+                      }`}
                   >
                     <span
-                      className={`inline-block h-6 w-6 transform rounded-full bg-white shadow-lg transition-transform ${
-                        formData.enabled ? 'translate-x-7' : 'translate-x-1'
-                      }`}
+                      className={`inline-block h-6 w-6 transform rounded-full bg-white shadow-lg transition-transform ${formData.enabled ? 'translate-x-7' : 'translate-x-1'
+                        }`}
                     />
                   </button>
                 </div>
@@ -533,22 +658,30 @@ function LinkCard({
   onToggle,
   onDelete,
   onCopy,
+  onArchive,
+  onPin,
   onDragStart,
   onDragOver,
   onDrop,
   draggedItem,
   dragOverItem,
+  isArchived,
+  isPinned,
 }: {
   link: Link;
   onEdit: (link: Link) => void;
   onToggle: (id: string, enabled: boolean) => void;
   onDelete: (id: string) => void;
   onCopy: (url: string) => void;
+  onArchive: (id: string, archived: boolean) => void;
+  onPin: (id: string, pinned: boolean) => void;
   onDragStart: (e: React.DragEvent, id: string) => void;
   onDragOver: (e: React.DragEvent, id: string) => void;
   onDrop: (e: React.DragEvent, id: string) => void;
   draggedItem: string | null;
   dragOverItem: string | null;
+  isArchived?: boolean;
+  isPinned?: boolean;
 }) {
   const getBadgeColor = (type: string) => {
     switch (type?.toLowerCase()) {
@@ -566,17 +699,20 @@ function LinkCard({
       onDragStart={(e) => onDragStart(e, link._id)}
       onDragOver={(e) => onDragOver(e, link._id)}
       onDrop={(e) => onDrop(e, link._id)}
-      className={`bg-white rounded-xl border transition-all ${
-        draggedItem === link._id ? 'opacity-50 border-[#2EE6A6]' :
-        dragOverItem === link._id ? 'border-[#2EE6A6]' :
-        'border-gray-200 hover:border-gray-300'
-      }`}
+      className={`bg-white rounded-xl border transition-all ${isArchived ? 'opacity-60 bg-gray-50' :
+          isPinned ? 'border-[#111111] shadow' :
+            draggedItem === link._id ? 'opacity-50 border-[#2EE6A6]' :
+              dragOverItem === link._id ? 'border-[#2EE6A6]' :
+                'border-gray-200 hover:border-gray-300'
+        }`}
     >
       <div className="flex items-center gap-3 p-3">
         {/* Drag Handle */}
-        <div className="cursor-grab active:cursor-grabbing text-gray-400 hover:text-gray-600 flex-shrink-0">
-          <GripVertical size={16} />
-        </div>
+        {!isArchived && (
+          <div className="cursor-grab active:cursor-grabbing text-gray-400 hover:text-gray-600 flex-shrink-0">
+            <GripVertical size={16} />
+          </div>
+        )}
 
         {/* Thumbnail */}
         {link.thumbnailUrl ? (
@@ -599,38 +735,62 @@ function LinkCard({
               </span>
             )}
           </div>
-          <p className="text-[10px] text-[#6B7280] mt-0.5 truncate">{link.url}</p>
+          <div className="flex items-center gap-3 mt-1">
+            <span className="text-[10px] font-semibold text-[#111111]">₹{link.earned || 0}</span>
+            <span className="text-[10px] text-[#6B7280]">{link.ctr || 0}% CTR</span>
+            <span className="text-[10px] text-[#6B7280]">{link.clicks || 0} clicks</span>
+          </div>
         </div>
 
-        {/* Analytics */}
-        <div className="flex items-center gap-4 flex-shrink-0">
-          <div className="text-right">
-            <p className="text-xs font-semibold text-[#111111]">{link.clicks || 0}</p>
-            <p className="text-[10px] text-[#6B7280]">CLICKS</p>
-          </div>
-
-          {/* Actions */}
-          <div className="flex items-center gap-0.5 flex-shrink-0">
-            <button
-              onClick={() => onEdit(link)}
-              className="p-1.5 text-gray-400 hover:text-[#111111] hover:bg-gray-100 rounded-lg transition-colors"
-            >
-              <Edit size={14} />
-            </button>
-            <button
-              onClick={() => onCopy(link.url)}
-              className="p-1.5 text-gray-400 hover:text-[#111111] hover:bg-gray-100 rounded-lg transition-colors"
-            >
-              <Copy size={14} />
-            </button>
-            <button
-              onClick={() => onToggle(link._id, link.enabled)}
-              className={`p-1.5 rounded-lg transition-colors ${
-                link.enabled ? 'text-[#111111] bg-[#111111]/10' : 'text-gray-400 bg-gray-100'
-              }`}
-            >
-              {link.enabled ? <Eye size={14} /> : <EyeOff size={14} />}
-            </button>
+        {/* Actions */}
+        <div className="flex items-center gap-0.5 flex-shrink-0">
+            {!isArchived && (
+              <>
+                <button
+                  onClick={() => onPin(link._id, !link.pinned)}
+                  className={`p-1.5 rounded-lg transition-colors ${link.pinned ? 'text-orange-500 bg-orange-100' : 'text-gray-400 hover:text-[#111111] hover:bg-gray-100'}`}
+                  title={link.pinned ? 'Unpin' : 'Pin'}
+                >
+                  <Pin size={14} />
+                </button>
+                <button
+                  onClick={() => onEdit(link)}
+                  className="p-1.5 text-gray-400 hover:text-[#111111] hover:bg-gray-100 rounded-lg transition-colors"
+                >
+                  <Edit size={14} />
+                </button>
+                <button
+                  onClick={() => onCopy(link.url)}
+                  className="p-1.5 text-gray-400 hover:text-[#111111] hover:bg-gray-100 rounded-lg transition-colors"
+                >
+                  <Copy size={14} />
+                </button>
+                {/* <button
+                  onClick={() => onToggle(link._id, link.enabled)}
+                  className={`p-1.5 rounded-lg transition-colors ${link.enabled ? 'text-[#111111] bg-[#111111]/10' : 'text-gray-400 bg-gray-100'}`}
+                >
+                  {link.enabled ? <Eye size={14} /> : <EyeOff size={14} />}
+                </button> */}
+              </>
+            )}
+            {isArchived ? (
+              <button
+                onClick={() => onArchive(link._id, false)}
+                className="p-1.5 text-green-600 hover:text-green-700 hover:bg-green-50 rounded-lg transition-colors"
+                title="Restore"
+              >
+                <Archive size={14} />
+              </button>
+            ) : (
+              <button
+                onClick={() => onArchive(link._id, true)}
+                className="p-1.5 text-gray-400 hover:text-yellow-600 hover:bg-yellow-50 rounded-lg transition-colors"
+                title="Archive"
+              >
+                <Archive size={14} />
+              </button>
+              
+            )}
             <button
               onClick={() => onDelete(link._id)}
               className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
@@ -640,6 +800,6 @@ function LinkCard({
           </div>
         </div>
       </div>
-    </div>
+    // </div>
   );
 }
