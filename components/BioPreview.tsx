@@ -237,6 +237,12 @@ export function BioPreview({
                 </div>
               )}
 
+              {/* Branding */}
+              <p className={`mt-3 text-center text-[9px] ${currentTheme.subtext}`}>
+                Powered by <span className="text-[#2EE6A6] font-medium">YNLinks</span>
+                {/* <span className="block">---------------</span> */}
+              </p>
+
               {/* User Links */}
               {userLinks.filter(l => l.enabled !== false && l.archived !== true).length > 0 && (
                 <div className="mt-3 space-y-2 w-full pb-4">
@@ -246,12 +252,12 @@ export function BioPreview({
                       href={link.url}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className={`${currentTheme.cardBg} border ${currentTheme.border} ${buttonStyles[buttonStyle]} px-4 py-2.5 flex items-center gap-2`}
+                      className={`${currentTheme.cardBg} border ${currentTheme.border} ${buttonStyles[buttonStyle]} px-4 py-2 flex items-center gap-2`}
                     >
                       {link.thumbnailUrl ? (
-                        <img src={link.thumbnailUrl} alt="" className="w-4 h-4 rounded object-cover flex-shrink-0" />
+                        <img src={link.thumbnailUrl} alt="" className="w-6 h-6 rounded object-cover flex-shrink-0" />
                       ) : (
-                        <div className="w-4 h-4 rounded bg-[#2EE6A6]/20 flex-shrink-0" />
+                        <div className="w-6 h-6 rounded bg-[#2EE6A6]/20 flex-shrink-0" />
                       )}
                       <p className={`${currentTheme.text} text-[9px] font-medium truncate flex-1`}>
                         {link.title}

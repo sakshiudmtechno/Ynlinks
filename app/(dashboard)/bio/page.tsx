@@ -194,10 +194,10 @@ export default function BioPage() {
         {/* Left Column - Form Content */}
         <div className="space-y-6">
           {/* Your Bio Link */}
-          <div className="bg-white rounded-2xl border border-gray-200 p-6 shadow-sm">
-            <h3 className="text-lg font-semibold text-[#111111] mb-2">Your Bio Link</h3>
+          <div className="bg-white rounded-2xl border border-gray-300 p-6 shadow-sm">
+            <h3 className="text-md font-semibold text-[#111111] mb-2">Your Bio Link</h3>
             <p className="text-[#6B7280] text-sm mb-4">Share your custom bio link on all your social media platforms</p>
-            <div className="flex gap-3">
+            <div className="flex gap-3 items-center">
               <input
                 type="text"
                 value={bioLink}
@@ -206,32 +206,32 @@ export default function BioPage() {
               />
               <button
                 onClick={copyToClipboard}
-                className={`px-6 py-3 rounded-xl hover:bg-[#1FD695] transition-all flex items-center gap-2 font-semibold shadow-lg ${copied ? 'bg-green-500 text-white' : 'bg-[#2EE6A6] text-white'}`}
+                className={`px-4 py-3 rounded-xl hover:bg-[#1FD695] transition-all flex items-center gap-2 font-semibold shadow-lg ${copied ? 'bg-green-500 text-white' : 'bg-[#2EE6A6] text-white'}`}
               >
                 {copied ? <Check className="h-5 w-5" /> : <Copy className="h-5 w-5" />}
                 {copied ? 'Copied!' : 'Copy'}
               </button>
+              <a
+                href={bioLink}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="px-2 py-3 bg-[#111111] text-white rounded-xl hover:bg-black transition-all flex items-center gap-2 font-semibold shadow-lg"
+              >
+                <ExternalLink className="h-4 w-4" />
+                View Page
+              </a>
             </div>
-            <a
-              href={bioLink}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-2 mt-3 text-sm font-medium text-[#2EE6A6] hover:text-[#1FD695] transition-colors"
-            >
-              <ExternalLink size={16} />
-              View public page
-            </a>
           </div>
 
           {/* Profile Information */}
-          <div className="bg-white rounded-2xl border border-gray-200 p-6 shadow-sm">
-            <h3 className="text-lg font-semibold text-[#111111] mb-6">Profile</h3>
+          <div className="bg-white rounded-2xl border border-gray-300 p-6 shadow-sm">
+            <h3 className="text-lg font-semibold text-[#111111] mb-4">Profile</h3>
 
             <div className="flex items-start gap-6 mb-6">
               <div className="flex-shrink-0">
                 {formData.avatarUrl ? (
                   <div className="relative group">
-                    <img src={formData.avatarUrl} alt="Avatar" className="w-24 h-24 rounded-full object-cover border-4 border-[#2EE6A6]" />
+                    <img src={formData.avatarUrl} alt="Avatar" className="w-20 h-20 rounded-full object-cover border-4 border-[#2EE6A6]" />
                     <label className="absolute inset-0 bg-black/50 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer">
                       <input type="file" accept="image/*" onChange={handleImageUpload} className="hidden" />
                       <span className="text-white text-sm font-semibold">Change</span>
@@ -245,7 +245,7 @@ export default function BioPage() {
                 )}
               </div>
               <div className="flex-1">
-                <h4 className="text-xl font-bold text-[#111111] mb-1">{profile?.displayName || profile?.username}</h4>
+                <h5 className="text-xl font-bold text-[#111111] mb-1">{profile?.displayName || profile?.username}</h5>
                 <p className="text-[#6B7280]">@{profile?.username}</p>
               </div>
             </div>
@@ -258,7 +258,7 @@ export default function BioPage() {
                 value={formData.bio}
                 onChange={(e) => setFormData({ ...formData, bio: e.target.value })}
                 maxLength={80}
-                rows={3}
+                rows={2}
                 placeholder="Tell visitors about yourself..."
                 className="w-full border-2 border-gray-200 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-[#2EE6A6] focus:border-transparent transition-all resize-none"
               />
@@ -267,7 +267,7 @@ export default function BioPage() {
           </div>
 
           {/* Appearance */}
-          <div className="bg-white rounded-2xl border border-gray-200 p-6 shadow-sm">
+          <div className="bg-white rounded-2xl border border-gray-300 p-6 shadow-sm">
             <h3 className="text-lg font-semibold text-[#111111] mb-6">Appearance</h3>
 
             {/* Theme */}
@@ -382,7 +382,7 @@ export default function BioPage() {
                   <button
                     key={font.id}
                     onClick={() => setSelectedFontStyle(font.id)}
-                    className={`p-3 border-2 text-left transition-all rounded-lg h-16 ${selectedFontStyle === font.id ? 'border-[#2EE6A6] bg-[#2EE6A6] text-white' : 'border-gray-200 bg-white text-[#111111] hover:border-gray-400'}`}
+                    className={`py-1 px-3 border-2 transition-all text-sm font-medium rounded-lg ${selectedFontStyle === font.id ? 'border-[#2EE6A6] bg-[#2EE6A6] text-white' : 'border-gray-200 bg-white text-[#111111] hover:border-gray-400'}`}
                   >
                     <p className={`text-base font-medium ${font.family === 'serif' ? 'font-serif' : font.family === 'sans-serif' ? 'font-sans' : 'font-mono'}`}>
                       {font.name}
@@ -397,7 +397,7 @@ export default function BioPage() {
           </div>
 
           {/* Social Links */}
-          <div className="bg-white rounded-2xl border border-gray-200 p-6 shadow-sm">
+          <div className="bg-white rounded-2xl border border-gray-300 p-6 shadow-sm">
             <h3 className="text-lg font-semibold text-[#111111] mb-2">Social Links</h3>
             <p className="text-[#6B7280] text-sm mb-6">Add your social media profiles to display on your bio page</p>
 
