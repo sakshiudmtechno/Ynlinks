@@ -104,9 +104,9 @@ export default function AboutPage() {
         facebookUrl: formData.facebookUrl || undefined,
         onboardingComplete: true,
       });
-      // Show welcome message, then redirect after 2 seconds
+      // Show welcome message, then redirect to completion page
       setOnboardingComplete(true);
-      setTimeout(() => router.push('/links'), 6000);
+      setTimeout(() => router.push('/onboarding/completion'), 2000);
     } catch (err) {
       console.error('Failed to save', err);
     } finally {
